@@ -1,0 +1,156 @@
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  padding: 0 32px;
+  height: 64px;
+  background: rgba(255, 247, 226, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(139, 161, 148, 0.25);
+  box-shadow: 0 2px 16px rgba(79, 99, 61, 0.08);
+}
+
+.navbar-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.navbar-logo {
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.navbar-logo-img {
+  height: 48px;
+  width: auto;
+  object-fit: contain;
+}
+
+.navbar-links {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: var(--radius-full);
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  transition: all 0.2s ease;
+}
+
+.nav-link:hover {
+  opacity: 1;
+  background: rgba(79, 99, 61, 0.08);
+  color: var(--color-primary);
+}
+
+.nav-link.active {
+  background: var(--color-primary);
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(79, 99, 61, 0.3);
+}
+
+.nav-link.active:hover {
+  opacity: 0.9;
+}
+
+.logo-text {
+  font-size: 1.25rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.nav-login-btn {
+  margin-left: 12px;
+  background: var(--color-primary);
+  color: white !important;
+  padding: 8px 24px;
+  border-radius: var(--radius-full);
+  font-weight: 700;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(79, 99, 61, 0.25);
+}
+
+.nav-login-btn:hover {
+  transform: translateY(-2px);
+  background: var(--color-primary-light);
+  box-shadow: 0 6px 16px rgba(79, 99, 61, 0.35);
+}
+
+@media (max-width: 768px) {
+  .logo-text { display: none; }
+  .navbar-logo-img { height: 38px; }
+  
+  .navbar {
+    padding: 0 16px;
+    height: 60px;
+  }
+  
+  .navbar-container {
+    flex-direction: row;
+    gap: 0;
+    padding: 0;
+  }
+
+  /* Sleek floating bottom App Bar for mobile */
+  .navbar-links {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255, 247, 226, 0.95);
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    border: 1px solid rgba(139, 161, 148, 0.4);
+    box-shadow: 0 15px 35px rgba(79, 99, 61, 0.25);
+    border-radius: var(--radius-full);
+    padding: 8px 12px;
+    width: 90%;
+    max-width: 360px;
+    display: flex;
+    justify-content: space-between;
+    gap: 0;
+    z-index: 2000;
+  }
+  
+  .nav-link span { display: none; }
+  
+  .nav-link {
+    padding: 12px;
+    border-radius: 50%;
+  }
+
+  /* Detach the Login button from the bottom bar and stick it to the top right */
+  .nav-login-btn {
+    position: fixed;
+    top: 10px;
+    right: 16px;
+    margin: 0;
+    width: auto;
+    padding: 8px 18px;
+    box-shadow: 0 4px 12px rgba(79, 99, 61, 0.25);
+  }
+}
