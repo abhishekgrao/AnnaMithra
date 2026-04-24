@@ -28,7 +28,7 @@ export const Loader: React.FC<{ onComplete: () => void }> = ({ onComplete }) => 
           {/* Pulsing energetic rings behind the logo */}
           <div className="glow-ring ring-1"></div>
           <div className="glow-ring ring-2"></div>
-          <img src="/logo.png" alt="Aahara Setu" className="loader-logo" />
+          <img src="/annamithralogo.jpeg" alt="Aahara Setu" className="loader-logo" />
         </div>
         
         <div className="text-container">

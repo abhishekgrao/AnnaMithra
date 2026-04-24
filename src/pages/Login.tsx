@@ -79,7 +79,7 @@ export const Login: React.FC = () => {
     <div className="login-container">
       <div className="login-visual">
         <div className="login-logo">
-          <img src="/logo.png" alt="Aahara Setu" width={80} />
+          <img src="/annamithralogo.jpeg" alt="Aahara Setu" width={80} />
           <h1>Aahara Setu</h1>
         </div>
         <p>Connecting surplus food to social impact through trust and transparency.</p>
