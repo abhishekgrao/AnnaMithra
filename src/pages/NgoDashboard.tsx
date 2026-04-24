@@ -49,7 +49,7 @@ export const NgoDashboard: React.FC = () => {
       month: 'long',
       year: 'numeric'
     });
-    
+
     const receiptContent = `
 ANNA MITHRA - SURPLUS FOOD REDISTRIBUTION RECEIPT
 ------------------------------------------------
@@ -210,7 +210,7 @@ Thank you for contributing to a zero-waste future!
                         <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>{new Date(item.created_at).toLocaleDateString()} • {item.quantity}</p>
                       </div>
                     </div>
-                    <button 
+                    <button
                       onClick={() => handleDownloadReceipt(item)}
                       style={{ padding: '8px 14px', borderRadius: '10px', background: 'var(--color-primary)', color: 'white', border: 'none', fontWeight: 600, fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
                     >
@@ -226,10 +226,10 @@ Thank you for contributing to a zero-waste future!
         </Card>
       </div>
 
-      <Card className="current-order-card" style={{ 
-        marginTop: '24px', 
-        background: 'var(--color-card-bg)', 
-        border: '1px solid var(--color-primary-light)', 
+      <Card className="current-order-card" style={{
+        marginTop: '24px',
+        background: 'var(--color-card-bg)',
+        border: '1px solid var(--color-primary-light)',
         padding: '32px',
         display: 'flex',
         flexDirection: 'column',
@@ -240,7 +240,7 @@ Thank you for contributing to a zero-waste future!
       }}>
         {claimedListings.filter(l => l.status === 'Claimed').length > 0 ? (
           <div style={{ width: '100%' }}>
-             <h3 style={{ margin: '0 0 20px 0', fontSize: '1.4rem', display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--color-primary)' }}>
+            <h3 style={{ margin: '0 0 20px 0', fontSize: '1.4rem', display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--color-primary)' }}>
               <Package size={24} /> Active Claims
             </h3>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
@@ -252,7 +252,7 @@ Thank you for contributing to a zero-waste future!
                   </div>
                   <h4 style={{ margin: '0 0 4px 0', fontSize: '1.1rem' }}>{order.title}</h4>
                   <p style={{ margin: '0 0 16px 0', fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>From: <strong>{order.source}</strong></p>
-                  
+
                   <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
                     <div style={{ flex: 1, background: 'rgba(0,0,0,0.03)', padding: '8px', borderRadius: '10px', textAlign: 'center' }}>
                       <div style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', textTransform: 'uppercase' }}>Qty</div>
@@ -264,7 +264,7 @@ Thank you for contributing to a zero-waste future!
                     </div>
                   </div>
 
-                  <button 
+                  <button
                     onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(order.source)}`, '_blank')}
                     style={{ width: '100%', padding: '12px', borderRadius: '12px', background: 'rgba(79, 99, 61, 0.05)', color: 'var(--color-primary)', border: 'none', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
                   >
