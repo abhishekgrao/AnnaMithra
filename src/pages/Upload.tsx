@@ -48,6 +48,8 @@ export const Upload: React.FC = () => {
   
   const [checkedItems, setCheckedItems] = useState<boolean[]>(new Array(SAFETY_CHECKLIST.length).fill(false));
   const [errorMsg, setErrorMsg] = useState('');
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [showTerms, setShowTerms] = useState(false);
   
   const allChecked = checkedItems.every(Boolean);
 
@@ -260,6 +262,20 @@ export const Upload: React.FC = () => {
                 </div>
               </div>
 
+              {/* Terms and Conditions */}
+              <div style={{ marginTop: '20px', marginBottom: '20px', display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                <input 
+                  type="checkbox" 
+                  id="termsCheckbox" 
+                  checked={termsAccepted} 
+                  onChange={(e) => setTermsAccepted(e.target.checked)} 
+                  style={{ marginTop: '4px', accentColor: 'var(--color-primary)', width: '18px', height: '18px', cursor: 'pointer' }}
+                />
+                <label htmlFor="termsCheckbox" style={{ fontSize: '0.9rem', color: 'var(--color-text)', cursor: 'pointer' }}>
+                  I confirm that this listing complies with the <span onClick={(e) => { e.preventDefault(); setShowTerms(true); }} style={{ color: 'var(--color-primary)', textDecoration: 'underline', fontWeight: 'bold' }}>Terms &amp; Conditions</span> and is safe for redistribution.
+                </label>
+              </div>
+
               {!allChecked && (
                 <div className="checklist-warning">
                   <AlertCircle size={15} />
@@ -267,12 +283,37 @@ export const Upload: React.FC = () => {
                 </div>
               )}
 
-              <Button type="submit" size="lg" fullWidth disabled={isSubmitting || !allChecked}>
+              <Button type="submit" size="lg" fullWidth disabled={isSubmitting || !allChecked || !termsAccepted}>
                 {isSubmitting ? 'Uploading to Network...' : <><UploadIcon size={18} /> List Food Donation</>}
               </Button>
             </form>
           </Card>
         </div>
+
+        {/* Terms Modal */}
+        {showTerms && (
+          <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }}>
+            <Card className="glass" style={{ maxWidth: '600px', width: '90%', maxHeight: '80vh', overflowY: 'auto', padding: '32px', position: 'relative' }}>
+              <h2 style={{ color: 'var(--color-primary)', marginBottom: '16px', borderBottom: '2px solid var(--color-primary)', paddingBottom: '12px' }}>Surplus Food Listing – Terms &amp; Conditions</h2>
+              <div style={{ fontSize: '0.95rem', lineHeight: '1.6', color: 'var(--color-text)' }}>
+                <p style={{ marginBottom: '16px' }}>By listing food on AnnaMithra, you agree to the following:</p>
+                <ol style={{ paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <li><strong>Food Safety Responsibility:</strong> You confirm that the listed food is safe for consumption at the time of listing and has been stored and handled according to basic hygiene standards.</li>
+                  <li><strong>Accurate Information:</strong> You will provide correct details including food type, quantity, preparation time, and estimated expiry.</li>
+                  <li><strong>No Expired or Unsafe Food:</strong> You will not list food that is spoiled, contaminated, or past safe consumption limits.</li>
+                  <li><strong>Timely Handover:</strong> You agree to hand over the food within the specified time window and in the condition described.</li>
+                  <li><strong>No Sale of Donated Food:</strong> Food listed as donation must be provided free of cost to NGOs or recipients through the platform.</li>
+                  <li><strong>Liability Limitation:</strong> AnnaMithra acts only as a connecting platform. The responsibility for food quality remains with the supplier. NGOs/recipients accept food at their discretion.</li>
+                  <li><strong>Right to Remove Listings:</strong> The platform reserves the right to remove any listing that violates safety or policy guidelines.</li>
+                  <li><strong>Compliance with Local Regulations:</strong> You agree to follow applicable food safety and donation regulations.</li>
+                </ol>
+              </div>
+              <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end' }}>
+                <Button onClick={() => setShowTerms(false)}>Close &amp; Accept</Button>
+              </div>
+            </Card>
+          </div>
+        )}
 
         <div className="upload-sidebar">
           <Card className="why-card">

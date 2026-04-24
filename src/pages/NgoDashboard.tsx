@@ -27,8 +27,8 @@ export const NgoDashboard: React.FC = () => {
   const stats = [
     { label: 'Food Saved', value: '452 kg', icon: <Package size={22} />, color: '#4F633D', trend: '+12%' },
     { label: 'Meals Distributed', value: '1,280', icon: <BarChart3 size={22} />, color: '#8BA194', trend: '+8%' },
-    { label: 'CO₂ Reduced', value: '3.2 T', icon: <Leaf size={22} />, color: '#22c55e', trend: '+15%' },
-    { label: 'Match Rate', value: '94%', icon: <CheckCircle2 size={22} />, color: '#f59e0b', trend: '+2%' },
+    { label: 'Deliveries Received', value: '320', icon: <MapPin size={22} />, color: '#0ea5e9', trend: '+15%' },
+    { label: 'Deliveries Sent', value: '45', icon: <CheckCircle2 size={22} />, color: '#f59e0b', trend: '+2%' },
     { label: 'Waste Reduced', value: '32%', icon: <TrendingDown size={22} />, color: '#3b82f6', trend: '+5%' },
     { label: 'Kindness Score', value: '210 pts', icon: <Trophy size={22} />, color: '#a855f7', trend: '+10' },
   ];
@@ -100,7 +100,7 @@ export const NgoDashboard: React.FC = () => {
               <div key={step.name} className="flow-track-step">
                 <div className={`flow-track-circle ${step.status}`}>
                   {step.status === 'completed' ? <CheckCircle2 size={16} /> :
-                   step.status === 'active' ? <Zap size={16} /> : i + 1}
+                    step.status === 'active' ? <Zap size={16} /> : i + 1}
                 </div>
                 <div className="flow-track-info">
                   <span className="flow-track-name">{step.name}</span>
@@ -121,22 +121,6 @@ export const NgoDashboard: React.FC = () => {
 
       {/* NGO Impact & Log Section (Replaced Heatmap) */}
       <div className="dashboard-main-row" style={{ marginTop: '24px' }}>
-        <Card className="impact-stats-card">
-          <div className="chart-header">
-            <h3><Trophy size={18} /> Your Impact Stats</h3>
-            <span className="tag-badge">Milestones</span>
-          </div>
-          <div className="impact-stats-content" style={{ display: 'flex', gap: '16px', marginTop: '16px', height: 'calc(100% - 60px)' }}>
-            <div className="impact-stat-box" style={{ flex: 1, background: 'rgba(34, 197, 94, 0.1)', padding: '16px', borderRadius: 'var(--radius-lg)', textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-              <h2 style={{ fontSize: '2rem', color: '#22c55e', margin: '0 0 8px 0' }}>320</h2>
-              <p style={{ margin: 0, fontWeight: 600, color: 'var(--color-text)', fontSize: '0.9rem' }}>Meals Brought</p>
-            </div>
-            <div className="impact-stat-box" style={{ flex: 1, background: 'rgba(59, 130, 246, 0.1)', padding: '16px', borderRadius: 'var(--radius-lg)', textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-              <h2 style={{ fontSize: '2rem', color: '#3b82f6', margin: '0 0 8px 0' }}>45</h2>
-              <p style={{ margin: 0, fontWeight: 600, color: 'var(--color-text)', fontSize: '0.9rem' }}>Meals Ordered</p>
-            </div>
-          </div>
-        </Card>
 
         <Card className="donation-log-card">
           <div className="chart-header">
@@ -153,7 +137,7 @@ export const NgoDashboard: React.FC = () => {
                 ⬇️ Download Receipt
               </button>
             </div>
-            
+
             <h4 style={{ margin: '0 0 16px 0', fontSize: '1rem' }}>Past History</h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(0,0,0,0.02)', padding: '12px 16px', borderRadius: '12px' }}>
@@ -181,13 +165,35 @@ export const NgoDashboard: React.FC = () => {
         </Card>
       </div>
 
-      <Card className="current-order-card" style={{ marginTop: '24px', background: 'linear-gradient(135deg, var(--color-primary), var(--color-secondary))', border: 'none', padding: '24px' }}>
-        <div style={{ textAlign: 'center', color: '#ffffff' }}>
-          <h3 style={{ margin: '0 0 12px 0', fontSize: '1.4rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', color: '#ffffff' }}>
+      <Card className="current-order-card" style={{ 
+        marginTop: '24px', 
+        background: 'var(--color-card-bg)', 
+        border: '1px solid var(--color-primary-light)', 
+        padding: '32px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '24px',
+        alignItems: 'center',
+        justifyContent: 'center',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.02)'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <h3 style={{ margin: '0 0 12px 0', fontSize: '1.4rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', color: 'var(--color-primary)' }}>
             <Package size={24} /> Current Order
           </h3>
-          <p style={{ margin: 0, opacity: 0.95, fontSize: '1.1rem', color: '#ffffff' }}>
-            No orders on the way. Select from the <strong style={{ color: '#ffffff' }}>"Explore"</strong> tab to order!
+          <p style={{ margin: 0, fontSize: '1.1rem', color: 'var(--color-text-muted)' }}>
+            No orders on the way. Select from the <strong style={{ color: 'var(--color-primary)' }}>"Explore"</strong> tab to order!
+          </p>
+        </div>
+        
+        <div style={{ width: '100%', height: '1px', background: 'rgba(0,0,0,0.05)', maxWidth: '400px' }} />
+
+        <div style={{ textAlign: 'center' }}>
+          <h3 style={{ margin: '0 0 12px 0', fontSize: '1.4rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', color: '#f59e0b' }}>
+            <Zap size={24} /> Listings Status
+          </h3>
+          <p style={{ margin: 0, fontSize: '1.1rem', color: 'var(--color-text-muted)' }}>
+            No orders sold right now. Go to <strong style={{ color: '#f59e0b' }}>"Donate"</strong> to add your listing!
           </p>
         </div>
       </Card>

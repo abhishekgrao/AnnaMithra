@@ -1,14 +1,37 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from '../components/ui/Card';
 import { Package, Clock, MapPin, Activity, FileText, Download, Plus, Edit3, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '../lib/supabase';
 import './Dashboard.css';
 
 export const ShopDashboard: React.FC = () => {
   const navigate = useNavigate();
+  const [myListings, setMyListings] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetchMyListings();
+  }, []);
+
+  const fetchMyListings = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      
+      const { data, error } = await supabase
+        .from('donations')
+        .select('*')
+        .eq('donor_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      if (data) setMyListings(data);
+    } catch (err) {
+      console.error('Error fetching listings:', err);
+    }
+  };
 
   const handleDownloadPdf = () => {
-    // Generate a simple print-based PDF or Blob
     const printWindow = window.open('', '', 'height=600,width=800');
     if (printWindow) {
       printWindow.document.write('<html><head><title>Tax Benefit Receipt - AnnaMithra</title>');
@@ -33,10 +56,60 @@ export const ShopDashboard: React.FC = () => {
     }
   };
 
+  const handleDownloadTerms = (dateStr: string) => {
+    const printWindow = window.open('', '', 'height=600,width=800');
+    if (printWindow) {
+      printWindow.document.write('<html><head><title>Accepted Terms - AnnaMithra</title>');
+      printWindow.document.write('<style>body { font-family: sans-serif; padding: 40px; color: #2a3520; line-height: 1.6; } h1, h2 { color: #4F633D; } ol { padding-left: 20px; } li { margin-bottom: 12px; }</style>');
+      printWindow.document.write('</head><body>');
+      printWindow.document.write('<h1>AnnaMithra - Signed Terms & Conditions</h1>');
+      printWindow.document.write('<p><strong>Date Accepted:</strong> ' + dateStr + '</p>');
+      printWindow.document.write('<h2>Surplus Food Listing – Terms & Conditions</h2>');
+      printWindow.document.write('<ol>');
+      printWindow.document.write('<li><strong>Food Safety Responsibility:</strong> You confirm that the listed food is safe for consumption at the time of listing and has been stored and handled according to basic hygiene standards.</li>');
+      printWindow.document.write('<li><strong>Accurate Information:</strong> You will provide correct details including food type, quantity, preparation time, and estimated expiry.</li>');
+      printWindow.document.write('<li><strong>No Expired or Unsafe Food:</strong> You will not list food that is spoiled, contaminated, or past safe consumption limits.</li>');
+      printWindow.document.write('<li><strong>Timely Handover:</strong> You agree to hand over the food within the specified time window and in the condition described.</li>');
+      printWindow.document.write('<li><strong>No Sale of Donated Food:</strong> Food listed as donation must be provided free of cost to NGOs or recipients through the platform.</li>');
+      printWindow.document.write('<li><strong>Liability Limitation:</strong> AnnaMithra acts only as a connecting platform. The responsibility for food quality remains with the supplier. NGOs/recipients accept food at their discretion.</li>');
+      printWindow.document.write('<li><strong>Right to Remove Listings:</strong> The platform reserves the right to remove any listing that violates safety or policy guidelines.</li>');
+      printWindow.document.write('<li><strong>Compliance with Local Regulations:</strong> You agree to follow applicable food safety and donation regulations.</li>');
+      printWindow.document.write('</ol>');
+      printWindow.document.write('<br><p><em>Electronically verified by AnnaMithra Network.</em></p>');
+      printWindow.document.write('</body></html>');
+      printWindow.document.close();
+      printWindow.focus();
+      printWindow.print();
+    }
+  };
+
   const activeListings = [
-    { name: 'Assorted Pastries', qty: '20 items', time: '45 mins', urgency: 85, status: 'Claimed', ngo: 'Hope NGO', dist: '1.2 km', demand: 'High' },
-    { name: 'Fresh Bread', qty: '15 loaves', time: '3 hrs', urgency: 35, status: 'Available', ngo: null, dist: '0.8 km', demand: 'Medium' }
+    { id: 'm1', name: 'Assorted Pastries', qty: '20 items', time: '45 mins', urgency: 85, status: 'Claimed', ngo: 'Hope NGO', dist: '1.2 km', demand: 'High', date: new Date().toLocaleDateString() },
+    { id: 'm2', name: 'Fresh Bread', qty: '15 loaves', time: '3 hrs', urgency: 35, status: 'Available', ngo: null, dist: '0.8 km', demand: 'Medium', date: new Date().toLocaleDateString() }
   ];
+
+  // Map supabase items to frontend structure
+  const dynamicListings = myListings.map((d: any) => {
+    const expDate = new Date(d.expiry_time);
+    const now = new Date();
+    const hoursLeft = Math.max(0, (expDate.getTime() - now.getTime()) / (1000 * 60 * 60));
+    const urgency = hoursLeft < 2 ? 90 : hoursLeft < 6 ? 60 : 30;
+    
+    return {
+      id: d.id,
+      name: d.title,
+      qty: d.quantity,
+      time: hoursLeft < 1 ? `${Math.round(hoursLeft * 60)} mins` : `${Math.round(hoursLeft)} hrs`,
+      urgency,
+      status: d.status === 'available' ? 'Available' : 'Claimed',
+      ngo: null,
+      dist: '1.2 km',
+      demand: 'High',
+      date: new Date(d.created_at).toLocaleDateString()
+    };
+  });
+
+  const allListings = [...dynamicListings, ...activeListings];
 
   const donationHistory = [
     { date: 'Oct 12', food: 'Assorted Pastries', qty: '20 items', ngo: 'Hope NGO', value: '₹ 800' },
@@ -51,17 +124,19 @@ export const ShopDashboard: React.FC = () => {
           <h1 className="page-title">Shop <span className="gradient-text">Dashboard</span></h1>
           <p className="page-subtitle">Manage your surplus listings and track your social impact.</p>
         </div>
-        <button onClick={() => navigate('/upload')} className="nav-login-btn" style={{ position: 'relative', top: '0', right: '0', display: 'flex', gap: '8px', alignItems: 'center' }}>
-          <Plus size={18} />
-          Add New Listing
-        </button>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <button onClick={() => navigate('/upload')} className="nav-login-btn" style={{ position: 'relative', top: '0', right: '0', display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <Plus size={18} />
+            Add New Listing
+          </button>
+        </div>
       </div>
 
       {/* Active Surplus Listings */}
-      <h2 style={{ marginTop: '16px', fontSize: '1.4rem' }}>Active Surplus Listings</h2>
+      <h2 style={{ marginTop: '16px', fontSize: '1.4rem' }}>Your Current Listings</h2>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
-        {activeListings.map((list, i) => (
-          <Card key={i} style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        {allListings.map((list) => (
+          <Card key={list.id} style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
                 <h3 style={{ margin: '0 0 4px 0', fontSize: '1.25rem' }}>{list.name}</h3>
@@ -93,12 +168,17 @@ export const ShopDashboard: React.FC = () => {
               <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Activity size={14} /> {list.demand} Demand</span>
             </div>
 
-            <div style={{ display: 'flex', gap: '12px', marginTop: '4px' }}>
-              <button style={{ flex: 1, padding: '10px', borderRadius: 'var(--radius-md)', border: '1.5px solid rgba(79, 99, 61, 0.3)', background: 'transparent', color: 'var(--color-primary)', fontWeight: 600, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px', cursor: 'pointer', transition: 'all 0.2s' }}>
-                <Edit3 size={16} /> Edit
-              </button>
-              <button style={{ flex: 1, padding: '10px', borderRadius: 'var(--radius-md)', border: '1.5px solid rgba(239, 68, 68, 0.3)', background: 'transparent', color: '#ef4444', fontWeight: 600, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px', cursor: 'pointer', transition: 'all 0.2s' }}>
-                <Trash2 size={16} /> Cancel
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '4px' }}>
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <button style={{ flex: 1, padding: '10px', borderRadius: 'var(--radius-md)', border: '1.5px solid rgba(79, 99, 61, 0.3)', background: 'transparent', color: 'var(--color-primary)', fontWeight: 600, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px', cursor: 'pointer', transition: 'all 0.2s' }}>
+                  <Edit3 size={16} /> Edit
+                </button>
+                <button style={{ flex: 1, padding: '10px', borderRadius: 'var(--radius-md)', border: '1.5px solid rgba(239, 68, 68, 0.3)', background: 'transparent', color: '#ef4444', fontWeight: 600, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px', cursor: 'pointer', transition: 'all 0.2s' }}>
+                  <Trash2 size={16} /> Cancel
+                </button>
+              </div>
+              <button onClick={() => handleDownloadTerms(list.date)} style={{ padding: '8px', borderRadius: 'var(--radius-md)', background: 'rgba(79, 99, 61, 0.05)', color: 'var(--color-primary)', border: 'none', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, marginTop: '4px' }}>
+                <FileText size={14} /> View Accepted T&amp;C
               </button>
             </div>
           </Card>
