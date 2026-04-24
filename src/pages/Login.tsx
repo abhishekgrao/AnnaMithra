@@ -79,8 +79,8 @@ export const Login: React.FC = () => {
     <div className="login-container">
       <div className="login-visual">
         <div className="login-logo">
-          <img src="/logo.png" alt="Aahara Setu" width={80} />
-          <h1>Aahara Setu</h1>
+          <img src="/logo.png" alt="AnnaMithra" width={80} />
+          <h1>AnnaMithra</h1>
         </div>
         <p>Connecting surplus food to social impact through trust and transparency.</p>
         <div className="trust-stats">
@@ -99,7 +99,7 @@ export const Login: React.FC = () => {
         <Card className="auth-card glass">
           <div className="auth-header">
             <h2>{isLogin ? 'Welcome Back' : 'Join the Network'}</h2>
-            <p>{isLogin ? 'Sign in to your Aahara Setu account' : 'Create your verified donor/ngo profile'}</p>
+            <p>{isLogin ? 'Sign in to your AnnaMithra account' : 'Create your verified donor/ngo profile'}</p>
           </div>
 
           <form onSubmit={handleAuth} className="auth-form">

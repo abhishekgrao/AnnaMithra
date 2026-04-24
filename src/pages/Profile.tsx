@@ -11,7 +11,7 @@ import './Profile.css';
 export const Profile: React.FC = () => {
   const [trustScore, setTrustScore] = useState(88);
   const [isVerifying, setIsVerifying] = useState(false);
-  const userAaharaId = localStorage.getItem('aaharaId') || 'AS-7742';
+  const userAnnaMithraId = localStorage.getItem('annaMithraId') || 'AM-7742';
   const userName = localStorage.getItem('userType') === 'donor' ? 'Haldiram\'s' : 'Akshaya Patra';
 
   const handleVerification = () => {
@@ -37,7 +37,7 @@ export const Profile: React.FC = () => {
               <h1>{userName}</h1>
               <div className="user-id-badge">
                 <ShieldCheck size={16} />
-                <span>ID: {userAaharaId}</span>
+                <span>ID: {userAnnaMithraId}</span>
               </div>
               <p>Registered as a Platinum Donor since April 2025</p>
             </div>

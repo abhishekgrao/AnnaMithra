@@ -95,7 +95,7 @@ export const Feedback: React.FC = () => {
             <Card className="thank-you-card">
               <div className="ty-icon">🙏</div>
               <h3>Thank you for your feedback!</h3>
-              <p>Your review helps improve the Aahara Setu network and builds trust in the community.</p>
+              <p>Your review helps improve the AnnaMithra network and builds trust in the community.</p>
               <div className="ty-score-gain">
                 <Award size={16} />
                 <span>+5 Kindness Points earned!</span>
