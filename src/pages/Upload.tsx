@@ -343,6 +343,82 @@ export const Upload: React.FC = () => {
                 </div>
               </div>
 
+              {/* Safety & Logistics Data Section */}
+              <div style={{ marginTop: '32px', padding: '24px', background: 'rgba(79, 99, 61, 0.03)', borderRadius: '20px', border: '1px solid rgba(79, 99, 61, 0.1)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+                  <div style={{ padding: '8px', background: 'var(--color-primary)', color: 'white', borderRadius: '8px' }}>
+                    <ShieldCheck size={20} />
+                  </div>
+                  <h3 style={{ margin: 0, fontSize: '1.2rem', color: 'var(--color-primary)' }}>Safety & Logistics Data</h3>
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <Input 
+                      label="Specific Food Type" 
+                      placeholder="e.g., Deep Fried Meat, Mixed Cooked Rice" 
+                      value={foodType}
+                      onChange={(e) => setFoodType(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <Input 
+                      label="Prepared At (Time)" 
+                      type="datetime-local" 
+                      value={preparedAt}
+                      onChange={(e) => setPreparedAt(e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <Select 
+                      label="Storage Temp Type" 
+                      options={[
+                        { value: 'Ambient', label: 'Ambient / Cooling' },
+                        { value: 'Hot', label: 'Hot Holding (>60°C)' },
+                        { value: 'Cold', label: 'Chilled (<5°C)' }
+                      ]} 
+                      value={storageTempType} 
+                      onChange={setStorageTempType} 
+                    />
+                  </div>
+                  <div className="form-group">
+                    <Input 
+                      label="Current Temperature (°C)" 
+                      placeholder="e.g., 42, 65" 
+                      value={currentTemp}
+                      onChange={(e) => setCurrentTemp(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <Input 
+                      label="Packaging Type" 
+                      placeholder="e.g., Vented Cardboard, Foil Wrap" 
+                      value={packagingType}
+                      onChange={(e) => setPackagingType(e.target.value)}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <Input 
+                      label="Storage Environment" 
+                      placeholder="e.g., Countertop, Refrigerator" 
+                      value={storageEnv}
+                      onChange={(e) => setStorageEnv(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <p style={{ margin: '16px 0 0', fontSize: '0.8rem', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>
+                  * This data allows our system to calculate high-precision <strong>Safety Buffers</strong> and <strong>Urgency Scores</strong>.
+                </p>
+              </div>
+
               <div className="form-group location-group">
                 <Input 
                   label="Pickup Location / Address" 

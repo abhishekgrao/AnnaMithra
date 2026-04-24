@@ -83,12 +83,12 @@ Thank you for contributing to a zero-waste future!
   };
 
   const stats = [
-    { label: 'Food Saved', value: '452 kg', icon: <Package size={22} />, color: '#4F633D', trend: '+12%' },
-    { label: 'Meals Distributed', value: '1,280', icon: <BarChart3 size={22} />, color: '#8BA194', trend: '+8%' },
-    { label: 'Deliveries Received', value: '320', icon: <MapPin size={22} />, color: '#0ea5e9', trend: '+15%' },
-    { label: 'Deliveries Sent', value: '45', icon: <CheckCircle2 size={22} />, color: '#f59e0b', trend: '+2%' },
-    { label: 'Waste Reduced', value: '32%', icon: <TrendingDown size={22} />, color: '#3b82f6', trend: '+5%' },
-    { label: 'Kindness Score', value: '210 pts', icon: <Trophy size={22} />, color: '#a855f7', trend: '+10' },
+    { label: 'Food Saved', value: '1 kg', icon: <Package size={22} />, color: '#4F633D', trend: '+1%' },
+    { label: 'Meals Distributed', value: '20', icon: <BarChart3 size={22} />, color: '#8BA194', trend: '+5%' },
+    { label: 'Deliveries Received', value: '5', icon: <MapPin size={22} />, color: '#0ea5e9', trend: '+12%' },
+    { label: 'Deliveries Sent', value: '2', icon: <CheckCircle2 size={22} />, color: '#f59e0b', trend: '+2%' },
+    { label: 'Waste Reduced', value: '3%', icon: <TrendingDown size={22} />, color: '#3b82f6', trend: '+1%' },
+    { label: 'Kindness Score', value: '15 pts', icon: <Trophy size={22} />, color: '#a855f7', trend: '+5' },
   ];
 
   const flowSteps = [
@@ -100,8 +100,6 @@ Thank you for contributing to a zero-waste future!
   ];
 
   const recentActivity = [
-    { icon: '✅', text: 'Assorted Pastries claimed by Hope NGO', time: '5 mins ago', type: 'success' },
-    { icon: '⚡', text: 'High priority: Paneer Tikka expiring in 45 mins', time: '10 mins ago', type: 'urgent' },
     { icon: '🔄', text: 'Auto-redistribution: Fruit Platters re-routed to Shelter B', time: '1 hr ago', type: 'fallback' },
     { icon: '🚚', text: 'Volunteer pickup confirmed for Biryani', time: '2 hrs ago', type: 'success' },
   ];
@@ -129,7 +127,8 @@ Thank you for contributing to a zero-waste future!
         ))}
       </div>
 
-      {/* Chart + Flow */}
+
+
       <div className="dashboard-main-row">
         <Card className="chart-card">
           <div className="chart-header">

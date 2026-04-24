@@ -11,8 +11,55 @@ import './Profile.css';
 export const Profile: React.FC = () => {
   const [trustScore, setTrustScore] = useState(88);
   const [isVerifying, setIsVerifying] = useState(false);
+  const [showVerifyModal, setShowVerifyModal] = useState(false);
+  const [isVerified, setIsVerified] = useState(true); // Badge added as requested
+  const [verifyForm, setVerifyForm] = useState({
+    section8: '',
+    pan: '',
+    aadhar: '',
+    address: '',
+    section12a: '',
+    section80g: ''
+  });
+
+  const userType = localStorage.getItem('userType') || 'donor';
+  const isDonor = userType === 'donor' || userType === 'shop' || userType === 'vendor';
   const userAnnaMithraId = localStorage.getItem('annaMithraId') || 'AM-7742';
-  const userName = localStorage.getItem('userType') === 'donor' ? 'Haldiram\'s' : 'Akshaya Patra';
+  const userName = isDonor ? 'Haldiram\'s' : 'Akshaya Patra';
+
+  const handleVerifySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsVerifying(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not logged in");
+
+      const { error } = await supabase
+        .from('profiles')
+        .upsert({
+          id: user.id,
+          section_8: verifyForm.section8,
+          pan: verifyForm.pan,
+          aadhar: verifyForm.aadhar,
+          office_address: verifyForm.address,
+          section_12a: verifyForm.section12a,
+          section_80g: verifyForm.section80g,
+          is_verified: true,
+          updated_at: new Date().toISOString()
+        });
+
+      if (error) throw error;
+
+      alert("Success! Your verification docs are now live in the database for judicial review. Trust Score updated! 🚀");
+      setIsVerified(true);
+      setTrustScore(98);
+      setShowVerifyModal(false);
+    } catch (err: any) {
+      alert("Error: " + err.message);
+    } finally {
+      setIsVerifying(false);
+    }
+  };
 
   const handleVerification = () => {
     setIsVerifying(true);
@@ -34,12 +81,22 @@ export const Profile: React.FC = () => {
               <div className="user-status-badge">Verified Partner</div>
             </div>
             <div className="user-info">
-              <h1>{userName}</h1>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <h1 style={{ margin: 0 }}>{userName}</h1>
+                {isVerified && (
+                  <div className="verified-badge-premium" style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#4F633D', color: 'white', padding: '6px 12px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 800, boxShadow: '0 4px 10px rgba(0,0,0,0.1)' }}>
+                    <ShieldCheck size={12} /> {isDonor ? 'Verified Vendor' : 'Verified NGO'}
+                  </div>
+                )}
+              </div>
               <div className="user-id-badge">
                 <ShieldCheck size={16} />
                 <span>ID: {userAnnaMithraId}</span>
               </div>
-              <p>Registered as a Platinum Donor since April 2025</p>
+              <p>Registered as a Platinum Partner since April 2025</p>
+              <Button size="sm" variant="outline" style={{ marginTop: '10px' }} onClick={() => setShowVerifyModal(true)}>
+                {isDonor ? 'Vendor Compliance Docs' : (isVerified ? 'Manage Verification Docs' : 'Apply for Official Verification')}
+              </Button>
             </div>
           </Card>
 
@@ -133,6 +190,73 @@ export const Profile: React.FC = () => {
           </Card>
         </div>
       </div>
+
+      {/* Verification Modal */}
+      {showVerifyModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(8px)' }}>
+          <Card className="glass" style={{ maxWidth: '500px', width: '90%', padding: '32px', position: 'relative', background: 'white' }}>
+            <h2 style={{ marginBottom: '8px', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <ShieldCheck size={24} /> {isDonor ? 'Business Verification' : 'NGO Verification'}
+            </h2>
+            <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem', marginBottom: '24px' }}>
+              {isDonor 
+                ? 'Submit your business credentials to unlock the verified partner badge and gain donor trust.' 
+                : 'Submit your official documents to unlock high-priority claims and tax benefits.'}
+            </p>
+            
+            <form onSubmit={handleVerifySubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <label style={{ fontSize: '0.8rem', fontWeight: 700 }}>Section 8 License No.</label>
+                  <input required placeholder="SEC8-XXXXX" style={{ padding: '10px', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.1)' }} value={verifyForm.section8} onChange={e => setVerifyForm({...verifyForm, section8: e.target.value})} />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <label style={{ fontSize: '0.8rem', fontWeight: 700 }}>PAN Number</label>
+                  <input required placeholder="ABCDE1234F" style={{ padding: '10px', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.1)' }} value={verifyForm.pan} onChange={e => setVerifyForm({...verifyForm, pan: e.target.value})} />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <label style={{ fontSize: '0.8rem', fontWeight: 700 }}>Aadhar Number (Admin)</label>
+                <input required placeholder="XXXX-XXXX-XXXX" style={{ padding: '10px', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.1)' }} value={verifyForm.aadhar} onChange={e => setVerifyForm({...verifyForm, aadhar: e.target.value})} />
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <label style={{ fontSize: '0.8rem', fontWeight: 700 }}>Office Address</label>
+                <textarea required placeholder="Full registered address..." style={{ padding: '10px', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.1)', height: '80px' }} value={verifyForm.address} onChange={e => setVerifyForm({...verifyForm, address: e.target.value})} />
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', padding: '12px', background: 'rgba(79, 99, 61, 0.05)', borderRadius: '12px', border: '1px dashed var(--color-primary)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <label style={{ fontSize: '0.8rem', fontWeight: 700 }}>Section 12A Registration</label>
+                    <span style={{ fontSize: '0.6rem', color: 'var(--color-primary)', fontWeight: 800 }}>✨ 0 Tax</span>
+                  </div>
+                  <input placeholder="Registration No. (Optional)" style={{ padding: '10px', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.1)', background: 'white', fontSize: '0.85rem' }} value={verifyForm.section12a} onChange={e => setVerifyForm({...verifyForm, section12a: e.target.value})} />
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', padding: '12px', background: 'rgba(79, 99, 61, 0.05)', borderRadius: '12px', border: '1px dashed var(--color-primary)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <label style={{ fontSize: '0.8rem', fontWeight: 700 }}>80G Certificate</label>
+                    <span style={{ fontSize: '0.6rem', color: 'var(--color-primary)', fontWeight: 800 }}>🎁 Donor Perk</span>
+                  </div>
+                  <input placeholder="80G Certificate No. (Optional)" style={{ padding: '10px', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.1)', background: 'white', fontSize: '0.85rem' }} value={verifyForm.section80g} onChange={e => setVerifyForm({...verifyForm, section80g: e.target.value})} />
+                </div>
+              </div>
+              <p style={{ margin: '0', fontSize: '0.7rem', color: 'var(--color-text-muted)', textAlign: 'center' }}>
+                12A saves you tax. 80G ensures <strong>Donors get tax benefit!</strong>
+              </p>
+
+              <div style={{ display: 'flex', gap: '12px', marginTop: '12px' }}>
+                <button type="button" onClick={() => setShowVerifyModal(false)} style={{ flex: 1, padding: '12px', borderRadius: '10px', border: 'none', background: 'rgba(0,0,0,0.05)', fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+                <button type="submit" disabled={isVerifying} style={{ flex: 2, padding: '12px', borderRadius: '10px', border: 'none', background: 'var(--color-primary)', color: 'white', fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 15px rgba(79,99,61,0.3)', opacity: isVerifying ? 0.7 : 1 }}>
+                  {isVerifying ? 'Saving to Database...' : 'Submit to Supabase'}
+                </button>
+              </div>
+            </form>
+          </Card>
+        </div>
+      )}
     </div>
   );
 };
