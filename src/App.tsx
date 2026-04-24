@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Navbar } from './components/layout/Navbar';
+import { ProtectedRoute } from './components/layout/ProtectedRoute';
 import { Landing } from './pages/Landing';
 import { Explore } from './pages/Explore';
 import { Upload } from './pages/Upload';
@@ -44,20 +45,22 @@ function App() {
       <Router>
         <Navbar />
         <main style={{ padding: '84px 24px 0', maxWidth: '1200px', margin: '0 auto', minHeight: '100vh' }}>
-        <Routes>
-          <Route path="/" element={<Login />} />
-          <Route path="/landing" element={<Landing />} />
-          <Route path="/explore" element={<Explore />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/upload" element={<Upload />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/feedback" element={<Feedback />} />
-          <Route path="/notifications" element={<Notifications />} />
-        </Routes>
-      </main>
-      <Toast messages={toasts} onRemove={removeToast} />
-    </Router>
+          <Routes>
+            <Route path="/" element={<Login />} />
+            <Route path="/landing" element={<Landing />} />
+            <Route path="/login" element={<Login />} />
+            
+            {/* Protected Routes */}
+            <Route path="/explore" element={<ProtectedRoute><Explore /></ProtectedRoute>} />
+            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+            <Route path="/upload" element={<ProtectedRoute><Upload /></ProtectedRoute>} />
+            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="/feedback" element={<ProtectedRoute><Feedback /></ProtectedRoute>} />
+            <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
+          </Routes>
+        </main>
+        <Toast messages={toasts} onRemove={removeToast} />
+      </Router>
     </>
   );
 }

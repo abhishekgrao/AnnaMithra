@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Search, MapPin, Clock, AlertCircle, Zap, ShieldCheck, Users } from 'lucide-react';
 import { LeafletMap } from '../components/ui/LeafletMap';
+import { supabase } from '../lib/supabase';
 import './Explore.css';
 
 interface FoodItem {
@@ -66,6 +67,62 @@ export const Explore: React.FC = () => {
   const [claimedIds, setClaimedIds] = useState<string[]>([]);
   const [selectedFoodId, setSelectedFoodId] = useState<string | null>(null);
   const [claimQuantity, setClaimQuantity] = useState<string>('');
+
+  useEffect(() => {
+    fetchLiveDonations();
+  }, []);
+
+  const fetchLiveDonations = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('donations')
+        .select('*')
+        .eq('status', 'available');
+
+      if (error) throw error;
+      if (data && data.length > 0) {
+        const liveItems: FoodItem[] = data.map((d: any) => {
+          const expDate = new Date(d.expiry_time);
+          const now = new Date();
+          const hoursLeft = Math.max(0, (expDate.getTime() - now.getTime()) / (1000 * 60 * 60));
+          
+          let urgencyLevel: 'high' | 'medium' | 'low' = 'low';
+          let urgencyLabel = '✅ Low Priority';
+          let urgencyScore = 30;
+
+          if (hoursLeft < 2) {
+            urgencyLevel = 'high';
+            urgencyLabel = `⚡ High Priority - ${Math.round(hoursLeft * 60)} min`;
+            urgencyScore = 90;
+          } else if (hoursLeft < 6) {
+            urgencyLevel = 'medium';
+            urgencyLabel = `⏰ Medium - ${Math.round(hoursLeft)} hr`;
+            urgencyScore = 60;
+          }
+
+          return {
+            id: d.id,
+            name: d.title,
+            type: d.food_type,
+            quantity: d.quantity,
+            distance: '1.2 km', 
+            expiry: hoursLeft < 1 ? `${Math.round(hoursLeft * 60)} mins` : `${Math.round(hoursLeft)} hours`,
+            donor: 'Local Shop Donor', // Will be dynamic later
+            urgencyScore,
+            urgencyLevel,
+            urgencyLabel,
+            verified: true,
+            demand: 'High'
+          };
+        });
+
+        // Prepend new listings from database to the mock data!
+        setItems([...liveItems, ...MOCK_FOOD_ITEMS]);
+      }
+    } catch (err) {
+      console.error('Failed to fetch live donations:', err);
+    }
+  };
 
   const filteredItems = items.filter(item => {
     const matchSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
