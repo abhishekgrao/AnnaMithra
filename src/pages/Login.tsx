@@ -153,55 +153,108 @@ export const Login: React.FC = () => {
             </Button>
 
             <div className="test-login-divider">
-              <span>OR</span>
+              <span>OR QUICK TEST</span>
             </div>
 
-            <Button 
-              type="button" 
-              variant="outline" 
-              fullWidth 
-              onClick={async () => {
-                const testEmail = '1@test.com';
-                const testPass = '111111'; // Use 6 chars internally to avoid Supabase default 6-char policy
-                setEmail(testEmail);
-                setPassword(testPass);
-                
-                // Trigger auto-login
-                setIsLoading(true);
-                setError('');
-                try {
-                  const { data, error: loginErr } = await supabase.auth.signInWithPassword({
-                    email: testEmail,
-                    password: testPass,
-                  });
-
-                  if (loginErr) {
-                    // If login fails, try to signup once automatically
-                    const { error: signUpErr } = await supabase.auth.signUp({
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <Button 
+                type="button" 
+                variant="outline" 
+                fullWidth 
+                onClick={async () => {
+                  const testEmail = 'ngo@test.com';
+                  const testPass = '111111';
+                  const testRole = 'ngo';
+                  setEmail(testEmail);
+                  setPassword(testPass);
+                  
+                  // Trigger auto-login
+                  setIsLoading(true);
+                  setError('');
+                  try {
+                    const { data, error: loginErr } = await supabase.auth.signInWithPassword({
                       email: testEmail,
                       password: testPass,
                     });
-                    if (signUpErr) throw signUpErr;
-                    
-                    // Create profile
-                    await supabase.from('profiles').insert([{ id: (await supabase.auth.getUser()).data.user?.id, full_name: 'Test User', role: 'donor' }]);
-                    
-                    alert('Test account created! Clicking again will log you in.');
-                  } else if (data.user) {
-                    localStorage.setItem('isAuthenticated', 'true');
-                    localStorage.setItem('userType', 'donor');
-                    navigate('/dashboard');
+
+                    if (loginErr) {
+                      // If login fails, try to signup once automatically
+                      const { error: signUpErr } = await supabase.auth.signUp({
+                        email: testEmail,
+                        password: testPass,
+                      });
+                      if (signUpErr) throw signUpErr;
+                      
+                      // Create profile
+                      await supabase.from('profiles').insert([{ id: (await supabase.auth.getUser()).data.user?.id, full_name: 'Test NGO', role: testRole }]);
+                      
+                      alert('Test NGO account created! Clicking again will log you in.');
+                    } else if (data.user) {
+                      const { data: profile } = await supabase.from('profiles').select('role').eq('id', data.user.id).single();
+                      localStorage.setItem('isAuthenticated', 'true');
+                      localStorage.setItem('userType', profile?.role || testRole);
+                      navigate('/dashboard');
+                    }
+                  } catch (err: any) {
+                    setError(err.message);
+                  } finally {
+                    setIsLoading(false);
                   }
-                } catch (err: any) {
-                  setError(err.message);
-                } finally {
-                  setIsLoading(false);
-                }
-              }}
-              style={{ borderColor: 'var(--color-primary)', color: 'var(--color-primary)' }}
-            >
-              🚀 Quick Test Login (1 / 1)
-            </Button>
+                }}
+                style={{ borderColor: 'var(--color-primary)', color: 'var(--color-primary)', flex: 1, padding: '0 8px', fontSize: '0.9rem' }}
+              >
+                🏢 NGO
+              </Button>
+
+              <Button 
+                type="button" 
+                variant="outline" 
+                fullWidth 
+                onClick={async () => {
+                  const testEmail = 'shop@test.com';
+                  const testPass = '111111';
+                  const testRole = 'donor'; // 'donor' matches Food Donor role for shops
+                  setEmail(testEmail);
+                  setPassword(testPass);
+                  
+                  // Trigger auto-login
+                  setIsLoading(true);
+                  setError('');
+                  try {
+                    const { data, error: loginErr } = await supabase.auth.signInWithPassword({
+                      email: testEmail,
+                      password: testPass,
+                    });
+
+                    if (loginErr) {
+                      // If login fails, try to signup once automatically
+                      const { error: signUpErr } = await supabase.auth.signUp({
+                        email: testEmail,
+                        password: testPass,
+                      });
+                      if (signUpErr) throw signUpErr;
+                      
+                      // Create profile
+                      await supabase.from('profiles').insert([{ id: (await supabase.auth.getUser()).data.user?.id, full_name: 'Test Supermarket', role: testRole }]);
+                      
+                      alert('Test Supermarket account created! Clicking again will log you in.');
+                    } else if (data.user) {
+                      const { data: profile } = await supabase.from('profiles').select('role').eq('id', data.user.id).single();
+                      localStorage.setItem('isAuthenticated', 'true');
+                      localStorage.setItem('userType', profile?.role || testRole);
+                      navigate('/dashboard');
+                    }
+                  } catch (err: any) {
+                    setError(err.message);
+                  } finally {
+                    setIsLoading(false);
+                  }
+                }}
+                style={{ borderColor: 'var(--color-primary)', color: 'var(--color-primary)', flex: 1, padding: '0 8px', fontSize: '0.9rem' }}
+              >
+                🛒 Shop
+              </Button>
+            </div>
           </form>
 
           <div className="auth-footer">
