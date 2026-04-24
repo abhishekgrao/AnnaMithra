@@ -12,7 +12,7 @@ export const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
-  const [role, setRole] = useState('donor');
+  const [role, setRole] = useState('shop');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
@@ -120,9 +120,8 @@ export const Login: React.FC = () => {
                     value={role} 
                     onChange={(e) => setRole(e.target.value)}
                   >
-                    <option value="donor">Food Donor</option>
-                    <option value="ngo">NGO / Receiver</option>
-                    <option value="volunteer">Volunteer / Driver</option>
+                    <option value="shop">Shop</option>
+                    <option value="ngo">NGO</option>
                   </select>
                 </div>
               </>
@@ -213,7 +212,7 @@ export const Login: React.FC = () => {
                 onClick={async () => {
                   const testEmail = 'shop@test.com';
                   const testPass = '111111';
-                  const testRole = 'donor'; // 'donor' matches Food Donor role for shops
+                  const testRole = 'shop';
                   setEmail(testEmail);
                   setPassword(testPass);
                   
