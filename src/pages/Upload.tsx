@@ -47,11 +47,21 @@ export const Upload: React.FC = () => {
   const [address, setAddress] = useState('');
   const [coords, setCoords] = useState<{lat: number, lng: number} | null>(null);
   const [instructions, setInstructions] = useState('');
+  const [mapsLink, setMapsLink] = useState('');
+  const [manualCoords, setManualCoords] = useState<{lat: string, lng: string}>({lat: '', lng: ''});
   
   const [checkedItems, setCheckedItems] = useState<boolean[]>(new Array(SAFETY_CHECKLIST.length).fill(false));
   const [errorMsg, setErrorMsg] = useState('');
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
+
+  // Safety & Logistics State
+  const [foodType, setFoodType] = useState('');
+  const [preparedAt, setPreparedAt] = useState('');
+  const [storageTempType, setStorageTempType] = useState('Ambient');
+  const [currentTemp, setCurrentTemp] = useState('');
+  const [packagingType, setPackagingType] = useState('');
+  const [storageEnv, setStorageEnv] = useState('');
 
   // Nutrition Search State
   const [isSearching, setIsSearching] = useState(false);
@@ -68,8 +78,11 @@ export const Upload: React.FC = () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
-          setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-          setAddress(`GPS Data: ${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`);
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+          setCoords({ lat, lng });
+          setManualCoords({ lat: lat.toString(), lng: lng.toString() });
+          setAddress(`GPS Data: ${lat.toFixed(4)}, ${lng.toFixed(4)}`);
         },
         () => {
           alert("Could not fetch location. Please enter your address manually.");
@@ -78,6 +91,25 @@ export const Upload: React.FC = () => {
     }
   };
 
+  const handleMapsLinkParse = () => {
+    if (!mapsLink) return;
+    
+    // Extract lat/lng from Google Maps URL format: @lat,lng,zoom
+    const regex = /@(-?\d+\.\d+),(-?\d+\.\d+)/;
+    const match = mapsLink.match(regex);
+    
+    if (match && match[1] && match[2]) {
+      const lat = match[1];
+      const lng = match[2];
+      setManualCoords({ lat, lng });
+      setCoords({ lat: parseFloat(lat), lng: parseFloat(lng) });
+      setAddress(`Extracted from Maps: ${lat}, ${lng}`);
+      alert(`Location extracted! Lat: ${lat}, Lng: ${lng}`);
+    } else {
+      alert("Could not find coordinates in this link. Please ensure it's a standard Google Maps URL with '@lat,lng' format.");
+    }
+  };
+  
   const handleSearch = async () => {
     if (!title.trim()) return;
     
@@ -127,8 +159,8 @@ export const Upload: React.FC = () => {
           quantity: quantity,
           expiry_time: (new Date(expiryTime)).toISOString(),
           expiry_days: Math.max(1, Math.ceil(((new Date(expiryTime)).getTime() - Date.now()) / (1000 * 60 * 60 * 24))),
-          latitude: coords?.lat || 12.9716,
-          longitude: coords?.lng || 77.5946,
+          latitude: manualCoords.lat ? parseFloat(manualCoords.lat) : (coords?.lat || 12.3396),
+          longitude: manualCoords.lng ? parseFloat(manualCoords.lng) : (coords?.lng || 76.6201),
           source: user.email?.split('@')[0] || 'Community Donor',
           type: 'donation',
           urgency_score: 50, // Default mid urgency
@@ -137,7 +169,17 @@ export const Upload: React.FC = () => {
           carbs: nutrition?.carbs,
           fat: nutrition?.fat,
           allergens: nutrition?.allergens,
-          nutrition_source: nutrition ? 'open_food_facts' : null
+          nutrition_source: nutrition ? 'open_food_facts' : null,
+          // Safety & System Data
+          food_type: foodType,
+          prepared_at: preparedAt,
+          storage_temp_type: storageTempType,
+          current_temp: currentTemp,
+          packaging_type: packagingType,
+          storage_env: storageEnv,
+          vendor_trust_score: 95, // Default for new donors
+          past_accuracy_score: 100,
+          transport_feasible: '✅ YES'
         }
       ]);
 
@@ -303,14 +345,48 @@ export const Upload: React.FC = () => {
 
               <div className="form-group location-group">
                 <Input 
-                  label="Pickup Location" 
-                  placeholder="Enter address or use current location" 
+                  label="Pickup Location / Address" 
+                  placeholder="Enter shop address or building name" 
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
                   required 
                 />
-                <button type="button" className="fetch-location-btn" onClick={fetchLocation}>
-                  <MapPin size={15} /> Use Current Location
+                
+                <div style={{ marginTop: '16px' }}>
+                  <Input 
+                    label="Google Maps Link (Auto-Fetch Coordinates)" 
+                    placeholder="Paste maps.google.com link here..." 
+                    value={mapsLink}
+                    onChange={(e) => setMapsLink(e.target.value)}
+                    rightIcon={<Search size={18} />}
+                    onIconClick={handleMapsLinkParse}
+                  />
+                  <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '4px' }}>
+                    Tip: Search your location on Google Maps and paste the URL here to auto-pin your donation.
+                  </p>
+                </div>
+
+                <div className="form-row" style={{ marginTop: '16px' }}>
+                  <div className="form-group">
+                    <Input 
+                      label="Latitude" 
+                      placeholder="e.g., 12.3396" 
+                      value={manualCoords.lat}
+                      onChange={(e) => setManualCoords(prev => ({ ...prev, lat: e.target.value }))}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <Input 
+                      label="Longitude" 
+                      placeholder="e.g., 76.6201" 
+                      value={manualCoords.lng}
+                      onChange={(e) => setManualCoords(prev => ({ ...prev, lng: e.target.value }))}
+                    />
+                  </div>
+                </div>
+
+                <button type="button" className="fetch-location-btn" style={{ marginTop: '12px' }} onClick={fetchLocation}>
+                  <MapPin size={15} /> Use My Current GPS
                 </button>
               </div>
 

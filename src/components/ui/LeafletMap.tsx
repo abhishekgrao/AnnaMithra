@@ -17,30 +17,43 @@ export const LeafletMap: React.FC<LeafletMapProps> = ({ location, lat = 12.9716,
   const mapInstance = useRef<any>(null);
 
   useEffect(() => {
-    if (!window.L || !mapRef.current) return;
+    const init = () => {
+      if (!window.L || !mapRef.current) return;
 
-    if (mapInstance.current) {
-      mapInstance.current.remove();
-    }
+      try {
+        if (mapInstance.current) {
+          mapInstance.current.remove();
+          mapInstance.current = null;
+        }
 
-    // Initialize map
-    mapInstance.current = window.L.map(mapRef.current).setView([lat, lng], 14);
+        // Initialize map
+        mapInstance.current = window.L.map(mapRef.current).setView([lat, lng], 14);
 
-    // Google Maps Style Tile Layer (Leaflet compatible)
-    window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '© OpenStreetMap'
-    }).addTo(mapInstance.current);
+        // Tile Layer
+        window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19,
+          attribution: '© OpenStreetMap'
+        }).addTo(mapInstance.current);
 
-    // Add Marker
-    window.L.marker([lat, lng])
-      .addTo(mapInstance.current)
-      .bindPopup(`<b>${location}</b><br>Pickup Point`)
-      .openPopup();
+        // Add Marker
+        window.L.marker([lat, lng])
+          .addTo(mapInstance.current)
+          .bindPopup(`<b>${location}</b><br>Pickup Point`)
+          .openPopup();
+      } catch (err) {
+        console.error("LeafletMap error:", err);
+      }
+    };
+
+    const timer = setTimeout(init, 150);
 
     return () => {
+      clearTimeout(timer);
       if (mapInstance.current) {
-        mapInstance.current.remove();
+        try {
+          mapInstance.current.remove();
+        } catch (e) {}
+        mapInstance.current = null;
       }
     };
   }, [lat, lng, location]);

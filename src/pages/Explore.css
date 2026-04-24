@@ -239,6 +239,22 @@
 }
 .fallback-info p { font-size: 0.88rem; }
 
+@keyframes jump {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-15px) scale(1.02); }
+}
+
+@keyframes highlight-glow {
+  0% { box-shadow: 0 0 0 0 rgba(79, 99, 61, 0.4); border-color: var(--color-primary); }
+  100% { box-shadow: 0 0 0 15px rgba(79, 99, 61, 0); border-color: var(--color-primary); }
+}
+
+.food-card.selected-jump {
+  animation: jump 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) 2, highlight-glow 1.5s ease-out infinite alternate;
+  border: 3px solid var(--color-primary) !important;
+  z-index: 10;
+}
+
 @media (max-width: 768px) {
   .food-grid { grid-template-columns: 1fr; }
   .search-filter-bar { flex-direction: column; align-items: stretch; }
