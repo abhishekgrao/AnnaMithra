@@ -28,9 +28,9 @@ export const Loader: React.FC<{ onComplete: () => void }> = ({ onComplete }) => 
           {/* Pulsing energetic rings behind the logo */}
           <div className="glow-ring ring-1"></div>
           <div className="glow-ring ring-2"></div>
-          <img src="/logo.png" alt="AnnaMithra" className="loader-logo" />
+          <img src="/annamithralogo.jpeg" alt="AnnaMithra" className="loader-logo" />
         </div>
-        
+
         <div className="text-container">
           <h1 className="loader-title">AnnaMithra</h1>
           <div className="loader-subtitle">
@@ -39,7 +39,7 @@ export const Loader: React.FC<{ onComplete: () => void }> = ({ onComplete }) => 
             <span>Feeding Lives</span>
           </div>
         </div>
-        
+
         <div className="progress-container">
           <div className="progress-bar"></div>
         </div>

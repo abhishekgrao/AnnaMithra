@@ -21,7 +21,7 @@ export const Navbar: React.FC = () => {
     <nav className="navbar">
       <div className="navbar-container">
         <Link to={isAuthenticated ? "/dashboard" : "/"} className="navbar-logo">
-          <img src="/logo.png" alt="AnnaMithra" className="navbar-logo-img" />
+          <img src="/annamithralogo.jpeg" alt="AnnaMithra" className="navbar-logo-img" />
           <span className="logo-text">AnnaMithra</span>
         </Link>
         <div className="navbar-links">
