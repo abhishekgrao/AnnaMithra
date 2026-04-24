@@ -10,8 +10,14 @@ export interface Listing {
   urgency_score: number;
   latitude: number | null;
   longitude: number | null;
-  type: 'supermarket' | 'dining';
+  type: 'supermarket' | 'dining' | 'donation';
   created_at: string;
+  calories?: number;
+  protein?: number;
+  carbs?: number;
+  fat?: number;
+  allergens?: string;
+  nutrition_source?: string;
 }
 
 export const fetchListings = async (): Promise<Listing[]> => {

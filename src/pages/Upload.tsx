@@ -4,7 +4,9 @@ import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
 import { Select } from '../components/ui/Select';
 import { supabase } from '../lib/supabase';
-import { Upload as UploadIcon, MapPin, CheckSquare, Square, ShieldCheck, AlertCircle } from 'lucide-react';
+import { Upload as UploadIcon, MapPin, CheckSquare, Square, ShieldCheck, AlertCircle, Search, RefreshCw, Info } from 'lucide-react';
+import { searchFood } from '../services/foodApi';
+import type { NutritionData } from '../services/foodApi';
 import './Upload.css';
 
 const SAFETY_CHECKLIST = [
@@ -50,6 +52,11 @@ export const Upload: React.FC = () => {
   const [errorMsg, setErrorMsg] = useState('');
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
+
+  // Nutrition Search State
+  const [isSearching, setIsSearching] = useState(false);
+  const [nutrition, setNutrition] = useState<NutritionData | null>(null);
+  const [nutritionMessage, setNutritionMessage] = useState('');
   
   const allChecked = checkedItems.every(Boolean);
 
@@ -71,6 +78,29 @@ export const Upload: React.FC = () => {
     }
   };
 
+  const handleSearch = async () => {
+    if (!title.trim()) return;
+    
+    setIsSearching(true);
+    setNutritionMessage('');
+    try {
+      const data = await searchFood(title);
+      if (data) {
+        setNutrition(data);
+        // Auto-fill category if it seems healthy or bakery
+        if (data.productName.toLowerCase().includes('bread')) setCategory('Bakery');
+        if (data.calories < 100) setCategory('Healthy');
+      } else {
+        setNutrition(null);
+        setNutritionMessage('No nutritional data found for this item.');
+      }
+    } catch (err) {
+      setNutritionMessage('Error fetching nutritional data.');
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
@@ -88,18 +118,26 @@ export const Upload: React.FC = () => {
         throw new Error("You must be legally logged in to list a food donation.");
       }
 
-      // Convert coordinates to PostGIS POINT string. Default to generic center if none provided.
-      const pointStr = coords ? `POINT(${coords.lng} ${coords.lat})` : 'POINT(77.5946 12.9716)';
-
-      const { error } = await supabase.from('donations').insert([
+      // We use the new 'listings' table as requested
+      const { error } = await supabase.from('listings').insert([
         {
           donor_id: user.id,
           title: title,
-          food_type: category,
+          category: category,
           quantity: quantity,
           expiry_time: (new Date(expiryTime)).toISOString(),
-          pickup_location: pointStr,
-          status: 'available'
+          expiry_days: Math.max(1, Math.ceil(((new Date(expiryTime)).getTime() - Date.now()) / (1000 * 60 * 60 * 24))),
+          latitude: coords?.lat || 12.9716,
+          longitude: coords?.lng || 77.5946,
+          source: user.email?.split('@')[0] || 'Community Donor',
+          type: 'donation',
+          urgency_score: 50, // Default mid urgency
+          calories: nutrition?.calories,
+          protein: nutrition?.protein,
+          carbs: nutrition?.carbs,
+          fat: nutrition?.fat,
+          allergens: nutrition?.allergens,
+          nutrition_source: nutrition ? 'open_food_facts' : null
         }
       ]);
 
@@ -170,7 +208,55 @@ export const Upload: React.FC = () => {
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   required 
+                  rightIcon={isSearching ? <RefreshCw size={18} className="animate-spin" /> : <Search size={18} />}
+                  onIconClick={handleSearch}
                 />
+                
+                {/* Nutrition Card */}
+                {(nutrition || nutritionMessage) && (
+                  <div style={{ 
+                    marginTop: '12px', 
+                    padding: '16px', 
+                    background: 'var(--color-bg)', 
+                    borderRadius: '12px', 
+                    border: '1px solid var(--color-primary-light)',
+                    animation: 'fadeIn 0.3s ease-out'
+                  }}>
+                    {nutritionMessage ? (
+                      <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <Info size={14} /> {nutritionMessage}
+                      </p>
+                    ) : nutrition && (
+                      <div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                          <span style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--color-primary)' }}>Nutritional data available</span>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>via Open Food Facts</span>
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
+                          <div style={{ textAlign: 'center', background: 'white', padding: '8px', borderRadius: '8px' }}>
+                            <div style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', textTransform: 'uppercase' }}>Cals</div>
+                            <div style={{ fontSize: '1rem', fontWeight: 600 }}>{Math.round(nutrition.calories)}</div>
+                          </div>
+                          <div style={{ textAlign: 'center', background: 'white', padding: '8px', borderRadius: '8px' }}>
+                            <div style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', textTransform: 'uppercase' }}>Protein</div>
+                            <div style={{ fontSize: '1rem', fontWeight: 600 }}>{nutrition.protein}g</div>
+                          </div>
+                          <div style={{ textAlign: 'center', background: 'white', padding: '8px', borderRadius: '8px' }}>
+                            <div style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', textTransform: 'uppercase' }}>Carbs</div>
+                            <div style={{ fontSize: '1rem', fontWeight: 600 }}>{nutrition.carbs}g</div>
+                          </div>
+                          <div style={{ textAlign: 'center', background: 'white', padding: '8px', borderRadius: '8px' }}>
+                            <div style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', textTransform: 'uppercase' }}>Fat</div>
+                            <div style={{ fontSize: '1rem', fontWeight: 600 }}>{nutrition.fat}g</div>
+                          </div>
+                        </div>
+                        <div style={{ marginTop: '10px', fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
+                          <strong>Allergens:</strong> {nutrition.allergens}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div className="form-row">

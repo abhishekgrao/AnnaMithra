@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from '../components/ui/Card';
-import { BarChart3, TrendingDown, Package, CheckCircle2, Leaf, Zap, Trophy, MapPin, RefreshCw } from 'lucide-react';
+import { BarChart3, TrendingDown, Package, CheckCircle2, Zap, Trophy, MapPin, RefreshCw, Clock, ExternalLink, Download } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 import './Dashboard.css';
 
 const WEEKLY_DATA = [
@@ -14,16 +15,73 @@ const WEEKLY_DATA = [
 ];
 const MAX_MEALS = Math.max(...WEEKLY_DATA.map(d => d.meals));
 
-const HEATMAP_ZONES = [
-  { name: 'Koramangala', waste: 85, demand: 30, type: 'surplus' },
-  { name: 'Indiranagar', waste: 70, demand: 45, type: 'surplus' },
-  { name: 'BTM Layout', waste: 20, demand: 90, type: 'demand' },
-  { name: 'Jayanagar', waste: 30, demand: 80, type: 'demand' },
-  { name: 'Whitefield', waste: 65, demand: 55, type: 'balanced' },
-  { name: 'Hebbal', waste: 10, demand: 95, type: 'demand' },
-];
-
 export const NgoDashboard: React.FC = () => {
+  const [claimedListings, setClaimedListings] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchMyClaims();
+  }, []);
+
+  const fetchMyClaims = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('listings')
+        .select('*')
+        .eq('claimed_by', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      if (data) setClaimedListings(data);
+    } catch (err) {
+      console.error('Error fetching claims:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDownloadReceipt = (item: any) => {
+    const today = new Date().toLocaleDateString('en-IN', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    });
+    
+    const receiptContent = `
+ANNA MITHRA - SURPLUS FOOD REDISTRIBUTION RECEIPT
+------------------------------------------------
+Date: ${today}
+Receipt ID: AM-${item.id.substring(0, 8).toUpperCase()}
+
+DONATION DETAILS:
+Item Name: ${item.title}
+Quantity: ${item.quantity}
+Source: ${item.source || 'Local Donor'}
+Category: ${item.category || 'General'}
+
+NUTRITION INFO:
+Calories: ${item.calories || 'N/A'} kcal
+Protein: ${item.protein || 'N/A'}g
+Carbs: ${item.carbs || 'N/A'}g
+Fat: ${item.fat || 'N/A'}g
+
+STATUS: CLAIMED & VERIFIED
+------------------------------------------------
+Thank you for contributing to a zero-waste future!
+    `.trim();
+
+    const blob = new Blob([receiptContent], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `AnnaMithra_Receipt_${item.title.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.txt`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
   const stats = [
     { label: 'Food Saved', value: '452 kg', icon: <Package size={22} />, color: '#4F633D', trend: '+12%' },
     { label: 'Meals Distributed', value: '1,280', icon: <BarChart3 size={22} />, color: '#8BA194', trend: '+8%' },
@@ -130,36 +188,39 @@ export const NgoDashboard: React.FC = () => {
           <div style={{ marginTop: '16px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', paddingBottom: '20px', borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
               <div>
-                <p style={{ margin: '0 0 4px 0', fontSize: '0.9rem', color: 'var(--color-text-muted)' }}>Total Items Donated</p>
-                <h3 style={{ margin: 0, fontSize: '1.75rem', color: 'var(--color-primary)' }}>1,204</h3>
+                <p style={{ margin: '0 0 4px 0', fontSize: '0.9rem', color: 'var(--color-text-muted)' }}>Total Impact (Estimated)</p>
+                <h3 style={{ margin: 0, fontSize: '1.75rem', color: 'var(--color-primary)' }}>1,204 Meals</h3>
               </div>
-              <button className="nav-login-btn" style={{ position: 'static', margin: 0, background: 'var(--color-secondary)' }}>
-                ⬇️ Download Receipt
-              </button>
+              <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', textAlign: 'right' }}>
+                <Clock size={12} /> Today: {new Date().toLocaleDateString()}
+              </div>
             </div>
 
-            <h4 style={{ margin: '0 0 16px 0', fontSize: '1rem' }}>Past History</h4>
+            <h4 style={{ margin: '0 0 16px 0', fontSize: '1rem' }}>Your Claim History</h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(0,0,0,0.02)', padding: '12px 16px', borderRadius: '12px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                  <div style={{ width: '42px', height: '42px', borderRadius: '50%', background: 'rgba(34, 197, 94, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>🍱</div>
-                  <div>
-                    <p style={{ margin: 0, fontWeight: 600 }}>50 Meals Distributed</p>
-                    <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>Yesterday • ID: #4829</p>
+              {claimedListings.length > 0 ? (
+                claimedListings.map((item) => (
+                  <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(79, 99, 61, 0.03)', padding: '16px', borderRadius: '16px', border: '1px solid rgba(79, 99, 61, 0.1)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                      <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.4rem', boxShadow: '0 4px 10px rgba(0,0,0,0.05)' }}>
+                        {item.category?.includes('Grain') ? '🌾' : item.category?.includes('Bakery') ? '🍞' : item.category?.includes('Meal') ? '🍱' : '🍎'}
+                      </div>
+                      <div>
+                        <p style={{ margin: 0, fontWeight: 700, fontSize: '1rem' }}>{item.title}</p>
+                        <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>{new Date(item.created_at).toLocaleDateString()} • {item.quantity}</p>
+                      </div>
+                    </div>
+                    <button 
+                      onClick={() => handleDownloadReceipt(item)}
+                      style={{ padding: '8px 14px', borderRadius: '10px', background: 'var(--color-primary)', color: 'white', border: 'none', fontWeight: 600, fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+                    >
+                      <Download size={14} /> Receipt
+                    </button>
                   </div>
-                </div>
-                <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#22c55e', background: 'rgba(34, 197, 94, 0.1)', padding: '4px 10px', borderRadius: '20px' }}>Completed</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(0,0,0,0.02)', padding: '12px 16px', borderRadius: '12px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                  <div style={{ width: '42px', height: '42px', borderRadius: '50%', background: 'rgba(59, 130, 246, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>🥦</div>
-                  <div>
-                    <p style={{ margin: 0, fontWeight: 600 }}>20kg Fresh Produce</p>
-                    <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>3 Days Ago • ID: #4801</p>
-                  </div>
-                </div>
-                <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#22c55e', background: 'rgba(34, 197, 94, 0.1)', padding: '4px 10px', borderRadius: '20px' }}>Completed</span>
-              </div>
+                ))
+              ) : (
+                <p style={{ textAlign: 'center', color: 'var(--color-text-muted)', padding: '20px' }}>No claim history yet.</p>
+              )}
             </div>
           </div>
         </Card>
@@ -175,27 +236,54 @@ export const NgoDashboard: React.FC = () => {
         gap: '24px',
         alignItems: 'center',
         justifyContent: 'center',
-        boxShadow: '0 4px 20px rgba(0,0,0,0.02)'
+        boxShadow: '0 10px 30px rgba(79, 99, 61, 0.05)'
       }}>
-        <div style={{ textAlign: 'center' }}>
-          <h3 style={{ margin: '0 0 12px 0', fontSize: '1.4rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', color: 'var(--color-primary)' }}>
-            <Package size={24} /> Current Order
-          </h3>
-          <p style={{ margin: 0, fontSize: '1.1rem', color: 'var(--color-text-muted)' }}>
-            No orders on the way. Select from the <strong style={{ color: 'var(--color-primary)' }}>"Explore"</strong> tab to order!
-          </p>
-        </div>
-        
-        <div style={{ width: '100%', height: '1px', background: 'rgba(0,0,0,0.05)', maxWidth: '400px' }} />
+        {claimedListings.filter(l => l.status === 'Claimed').length > 0 ? (
+          <div style={{ width: '100%' }}>
+             <h3 style={{ margin: '0 0 20px 0', fontSize: '1.4rem', display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--color-primary)' }}>
+              <Package size={24} /> Active Claims
+            </h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
+              {claimedListings.filter(l => l.status === 'Claimed').map(order => (
+                <div key={order.id} style={{ background: 'white', padding: '20px', borderRadius: '20px', border: '1px solid rgba(0,0,0,0.05)', boxShadow: '0 4px 15px rgba(0,0,0,0.02)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
+                    <span style={{ background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b', padding: '4px 12px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 700 }}>ON THE WAY</span>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>ID: #{order.id.substring(0, 5)}</span>
+                  </div>
+                  <h4 style={{ margin: '0 0 4px 0', fontSize: '1.1rem' }}>{order.title}</h4>
+                  <p style={{ margin: '0 0 16px 0', fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>From: <strong>{order.source}</strong></p>
+                  
+                  <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
+                    <div style={{ flex: 1, background: 'rgba(0,0,0,0.03)', padding: '8px', borderRadius: '10px', textAlign: 'center' }}>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', textTransform: 'uppercase' }}>Qty</div>
+                      <div style={{ fontWeight: 700 }}>{order.quantity}</div>
+                    </div>
+                    <div style={{ flex: 1, background: 'rgba(0,0,0,0.03)', padding: '8px', borderRadius: '10px', textAlign: 'center' }}>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', textTransform: 'uppercase' }}>Expires</div>
+                      <div style={{ fontWeight: 700, color: '#ef4444' }}>{order.expiry_days || 1}d</div>
+                    </div>
+                  </div>
 
-        <div style={{ textAlign: 'center' }}>
-          <h3 style={{ margin: '0 0 12px 0', fontSize: '1.4rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', color: '#f59e0b' }}>
-            <Zap size={24} /> Listings Status
-          </h3>
-          <p style={{ margin: 0, fontSize: '1.1rem', color: 'var(--color-text-muted)' }}>
-            No orders sold right now. Go to <strong style={{ color: '#f59e0b' }}>"Donate"</strong> to add your listing!
-          </p>
-        </div>
+                  <button 
+                    onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(order.source)}`, '_blank')}
+                    style={{ width: '100%', padding: '12px', borderRadius: '12px', background: 'rgba(79, 99, 61, 0.05)', color: 'var(--color-primary)', border: 'none', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                  >
+                    <MapPin size={16} /> Navigate to Donor
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div style={{ textAlign: 'center' }}>
+            <h3 style={{ margin: '0 0 12px 0', fontSize: '1.4rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', color: 'var(--color-primary)' }}>
+              <Package size={24} /> Current Order
+            </h3>
+            <p style={{ margin: 0, fontSize: '1.1rem', color: 'var(--color-text-muted)' }}>
+              No orders on the way. Select from the <strong style={{ color: 'var(--color-primary)' }}>"Explore"</strong> tab to order!
+            </p>
+          </div>
+        )}
       </Card>
 
       {/* Auto-Redistribution + Activity */}

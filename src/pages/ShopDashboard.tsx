@@ -3,11 +3,14 @@ import { Card } from '../components/ui/Card';
 import { Package, Clock, MapPin, Activity, FileText, Download, Plus, Edit3, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import { ConfirmationModal } from '../components/ui/ConfirmationModal';
 import './Dashboard.css';
 
 export const ShopDashboard: React.FC = () => {
   const navigate = useNavigate();
   const [myListings, setMyListings] = useState<any[]>([]);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [listingToCancel, setListingToCancel] = useState<string | null>(null);
 
   useEffect(() => {
     fetchMyListings();
@@ -19,7 +22,7 @@ export const ShopDashboard: React.FC = () => {
       if (!user) return;
       
       const { data, error } = await supabase
-        .from('donations')
+        .from('listings')
         .select('*')
         .eq('donor_id', user.id)
         .order('created_at', { ascending: false });
@@ -28,6 +31,32 @@ export const ShopDashboard: React.FC = () => {
       if (data) setMyListings(data);
     } catch (err) {
       console.error('Error fetching listings:', err);
+    }
+  };
+
+  const handleCancelClick = (id: string) => {
+    setListingToCancel(id);
+    setModalOpen(true);
+  };
+
+  const confirmCancel = async () => {
+    if (!listingToCancel) return;
+
+    try {
+      const { error } = await supabase
+        .from('listings')
+        .delete()
+        .eq('id', listingToCancel)
+        .select();
+
+      if (error) throw error;
+      
+      // Update local state
+      setMyListings(prev => prev.filter(item => item.id !== listingToCancel));
+      setListingToCancel(null);
+    } catch (err) {
+      console.error('Error deleting listing:', err);
+      alert("Failed to cancel listing. Please try again.");
     }
   };
 
@@ -90,10 +119,10 @@ export const ShopDashboard: React.FC = () => {
 
   // Map supabase items to frontend structure
   const dynamicListings = myListings.map((d: any) => {
-    const expDate = new Date(d.expiry_time);
+    const expDate = d.expiry_time ? new Date(d.expiry_time) : new Date(Date.now() + (d.expiry_days || 1) * 86400000);
     const now = new Date();
     const hoursLeft = Math.max(0, (expDate.getTime() - now.getTime()) / (1000 * 60 * 60));
-    const urgency = hoursLeft < 2 ? 90 : hoursLeft < 6 ? 60 : 30;
+    const urgency = d.urgency_score || (hoursLeft < 2 ? 90 : hoursLeft < 6 ? 60 : 30);
     
     return {
       id: d.id,
@@ -101,11 +130,16 @@ export const ShopDashboard: React.FC = () => {
       qty: d.quantity,
       time: hoursLeft < 1 ? `${Math.round(hoursLeft * 60)} mins` : `${Math.round(hoursLeft)} hrs`,
       urgency,
-      status: d.status === 'available' ? 'Available' : 'Claimed',
+      status: d.status || 'Available',
       ngo: null,
-      dist: '1.2 km',
+      dist: '0.0 km (You)',
       demand: 'High',
-      date: new Date(d.created_at).toLocaleDateString()
+      date: new Date(d.created_at).toLocaleDateString(),
+      calories: d.calories,
+      protein: d.protein,
+      carbs: d.carbs,
+      fat: d.fat,
+      allergens: d.allergens
     };
   });
 
@@ -168,12 +202,31 @@ export const ShopDashboard: React.FC = () => {
               <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Activity size={14} /> {list.demand} Demand</span>
             </div>
 
+            {/* Nutrition Facts in Dashboard */}
+            {list.calories !== undefined && list.calories !== null && (
+              <div style={{ padding: '10px', background: 'rgba(79, 99, 61, 0.04)', borderRadius: '8px', border: '1px dashed rgba(79, 99, 61, 0.2)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                  <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--color-primary)', textTransform: 'uppercase' }}>Nutrition</span>
+                  {list.allergens && <span style={{ fontSize: '0.7rem', color: '#ef4444' }}>⚠️ {list.allergens}</span>}
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
+                  <span><strong>{Math.round(list.calories)}</strong> kcal</span>
+                  <span><strong>{list.protein}g</strong> P</span>
+                  <span><strong>{list.carbs}g</strong> C</span>
+                  <span><strong>{list.fat}g</strong> F</span>
+                </div>
+              </div>
+            )}
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '4px' }}>
               <div style={{ display: 'flex', gap: '12px' }}>
                 <button style={{ flex: 1, padding: '10px', borderRadius: 'var(--radius-md)', border: '1.5px solid rgba(79, 99, 61, 0.3)', background: 'transparent', color: 'var(--color-primary)', fontWeight: 600, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px', cursor: 'pointer', transition: 'all 0.2s' }}>
                   <Edit3 size={16} /> Edit
                 </button>
-                <button style={{ flex: 1, padding: '10px', borderRadius: 'var(--radius-md)', border: '1.5px solid rgba(239, 68, 68, 0.3)', background: 'transparent', color: '#ef4444', fontWeight: 600, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px', cursor: 'pointer', transition: 'all 0.2s' }}>
+                <button 
+                  onClick={() => handleCancelClick(list.id)}
+                  style={{ flex: 1, padding: '10px', borderRadius: 'var(--radius-md)', border: '1.5px solid rgba(239, 68, 68, 0.3)', background: 'transparent', color: '#ef4444', fontWeight: 600, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px', cursor: 'pointer', transition: 'all 0.2s' }}
+                >
                   <Trash2 size={16} /> Cancel
                 </button>
               </div>
@@ -233,6 +286,17 @@ export const ShopDashboard: React.FC = () => {
           <FileText size={16} /> Eligible for tax deductions under Section 80G
         </div>
       </Card>
+
+      <ConfirmationModal 
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onConfirm={confirmCancel}
+        title="Cancel Listing?"
+        message="This action will permanently remove the food listing from the platform and it will no longer be visible to NGOs."
+        confirmText="Yes, Cancel Listing"
+        cancelText="No, Keep It"
+        isDanger={true}
+      />
     </div>
   );
 };

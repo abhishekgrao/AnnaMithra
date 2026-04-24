@@ -75,52 +75,62 @@ export const Explore: React.FC = () => {
   const fetchLiveDonations = async () => {
     try {
       const { data, error } = await supabase
-        .from('donations')
+        .from('listings')
         .select('*')
-        .eq('status', 'available');
+        .neq('status', 'Claimed')
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
       if (data && data.length > 0) {
         const liveItems: FoodItem[] = data.map((d: any) => {
-          const expDate = new Date(d.expiry_time);
+          const expDate = d.expiry_time ? new Date(d.expiry_time) : new Date(Date.now() + (d.expiry_days || 1) * 86400000);
           const now = new Date();
           const hoursLeft = Math.max(0, (expDate.getTime() - now.getTime()) / (1000 * 60 * 60));
           
           let urgencyLevel: 'high' | 'medium' | 'low' = 'low';
           let urgencyLabel = '✅ Low Priority';
-          let urgencyScore = 30;
+          let urgencyScore = d.urgency_score || 30;
 
-          if (hoursLeft < 2) {
+          if (hoursLeft < 2 || urgencyScore > 80) {
             urgencyLevel = 'high';
-            urgencyLabel = `⚡ High Priority - ${Math.round(hoursLeft * 60)} min`;
-            urgencyScore = 90;
-          } else if (hoursLeft < 6) {
+            urgencyLabel = hoursLeft < 24 ? `⚡ High Priority - ${Math.round(hoursLeft * 60)} min` : `⚡ High Priority`;
+            urgencyScore = urgencyScore || 90;
+          } else if (hoursLeft < 6 || urgencyScore > 50) {
             urgencyLevel = 'medium';
             urgencyLabel = `⏰ Medium - ${Math.round(hoursLeft)} hr`;
-            urgencyScore = 60;
+            urgencyScore = urgencyScore || 60;
           }
 
           return {
             id: d.id,
             name: d.title,
-            type: d.food_type,
+            type: d.category || 'Surplus Food',
             quantity: d.quantity,
-            distance: '1.2 km', 
-            expiry: hoursLeft < 1 ? `${Math.round(hoursLeft * 60)} mins` : `${Math.round(hoursLeft)} hours`,
-            donor: 'Local Shop Donor', // Will be dynamic later
+            distance: '0.5 km', 
+            expiry: hoursLeft < 1 ? `${Math.round(hoursLeft * 60)} mins` : hoursLeft < 24 ? `${Math.round(hoursLeft)} hours` : `${d.expiry_days || 1} days`,
+            donor: d.source || 'Local Donor',
             urgencyScore,
             urgencyLevel,
             urgencyLabel,
             verified: true,
-            demand: 'High'
+            demand: 'High',
+            // Adding nutrition fields for the modal if needed
+            calories: d.calories,
+            protein: d.protein,
+            carbs: d.carbs,
+            fat: d.fat,
+            allergens: d.allergens
           };
         });
 
-        // Prepend new listings from database to the mock data!
+        // Combine with mock data but prioritize live items
         setItems([...liveItems, ...MOCK_FOOD_ITEMS]);
+      } else {
+        setItems(MOCK_FOOD_ITEMS);
       }
     } catch (err) {
       console.error('Failed to fetch live donations:', err);
+      setItems(MOCK_FOOD_ITEMS);
     }
   };
 
@@ -131,12 +141,32 @@ export const Explore: React.FC = () => {
     return matchSearch && matchFilter && !claimedIds.includes(item.id);
   });
 
-  const handleConfirmClaim = () => {
-    if (selectedFoodId) {
+  const handleConfirmClaim = async () => {
+    if (!selectedFoodId) return;
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        alert("Please login as an NGO to claim food.");
+        return;
+      }
+
+      const { error } = await supabase
+        .from('listings')
+        .update({ 
+          status: 'Claimed', 
+          claimed_by: user.id 
+        })
+        .eq('id', selectedFoodId);
+
+      if (error) throw error;
+
       setClaimedIds(prev => [...prev, selectedFoodId]);
       setSelectedFoodId(null);
-      // Simulating a success toast or notification
-      alert(`Claim confirmed for ${claimQuantity || 'selected quantity'}! The donor has been notified.`);
+      alert(`Claim confirmed for ${claimQuantity || 'selected quantity'}! The donor has been notified and this order is now in your dashboard.`);
+    } catch (err) {
+      console.error('Error claiming food:', err);
+      alert("Failed to confirm claim. Please try again.");
     }
   };
 
@@ -171,6 +201,22 @@ export const Explore: React.FC = () => {
               </div>
 
             </div>
+
+            {/* Nutrition Facts in Modal */}
+            {(selectedFood as any).calories !== undefined && (selectedFood as any).calories !== null && (
+              <div style={{ padding: '16px', background: 'rgba(79, 99, 61, 0.05)', borderRadius: '12px', border: '1px solid rgba(79, 99, 61, 0.2)', marginBottom: '20px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', borderBottom: '1.5px solid rgba(79, 99, 61, 0.1)', paddingBottom: '6px' }}>
+                  <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--color-primary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Nutritional Facts</span>
+                  {(selectedFood as any).allergens && <span style={{ fontSize: '0.75rem', color: '#ef4444', fontWeight: 600 }}>⚠️ {(selectedFood as any).allergens}</span>}
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px' }}>
+                  <div style={{ textAlign: 'center' }}><div style={{ fontSize: '1rem', fontWeight: 800 }}>{Math.round((selectedFood as any).calories)}</div><div style={{ fontSize: '0.65rem', color: 'var(--color-text-muted)' }}>kcal</div></div>
+                  <div style={{ textAlign: 'center' }}><div style={{ fontSize: '1rem', fontWeight: 800 }}>{(selectedFood as any).protein}g</div><div style={{ fontSize: '0.65rem', color: 'var(--color-text-muted)' }}>Protein</div></div>
+                  <div style={{ textAlign: 'center' }}><div style={{ fontSize: '1rem', fontWeight: 800 }}>{(selectedFood as any).carbs}g</div><div style={{ fontSize: '0.65rem', color: 'var(--color-text-muted)' }}>Carbs</div></div>
+                  <div style={{ textAlign: 'center' }}><div style={{ fontSize: '1rem', fontWeight: 800 }}>{(selectedFood as any).fat}g</div><div style={{ fontSize: '0.65rem', color: 'var(--color-text-muted)' }}>Fat</div></div>
+                </div>
+              </div>
+            )}
 
             {/* Embedded Interactive Map */}
             <LeafletMap location={selectedFood.donor} />

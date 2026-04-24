@@ -1,7 +1,7 @@
-import React, { forwardRef } from 'react';
+import { forwardRef } from 'react';
 import { Card } from '../ui/Card';
 import { Clock, AlertTriangle, Package, Store } from 'lucide-react';
-import { Listing } from '../../services/supabaseListings';
+import type { Listing } from '../../services/supabaseListings';
 
 interface ListingCardProps {
   listing: Listing;
@@ -91,6 +91,47 @@ export const ListingCard = forwardRef<HTMLDivElement, ListingCardProps>(
               }} />
             </div>
           </div>
+          
+          {/* Nutrition Facts */}
+          {listing.calories !== undefined && listing.calories !== null && (
+            <div style={{ 
+              marginTop: '12px', 
+              padding: '10px', 
+              backgroundColor: 'white', 
+              borderRadius: '8px',
+              border: '1px solid rgba(0,0,0,0.03)'
+            }}>
+              <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--color-primary)', textTransform: 'uppercase', marginBottom: '6px', letterSpacing: '0.05em' }}>
+                Estimated Nutrition
+              </div>
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>{Math.round(listing.calories)}</div>
+                  <div style={{ fontSize: '0.65rem', color: 'var(--color-text-muted)' }}>kcal</div>
+                </div>
+                <div style={{ width: '1px', height: '20px', backgroundColor: 'rgba(0,0,0,0.1)' }} />
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>{listing.protein}g</div>
+                  <div style={{ fontSize: '0.65rem', color: 'var(--color-text-muted)' }}>Prot</div>
+                </div>
+                <div style={{ width: '1px', height: '20px', backgroundColor: 'rgba(0,0,0,0.1)' }} />
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>{listing.carbs}g</div>
+                  <div style={{ fontSize: '0.65rem', color: 'var(--color-text-muted)' }}>Carb</div>
+                </div>
+                <div style={{ width: '1px', height: '20px', backgroundColor: 'rgba(0,0,0,0.1)' }} />
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>{listing.fat}g</div>
+                  <div style={{ fontSize: '0.65rem', color: 'var(--color-text-muted)' }}>Fat</div>
+                </div>
+                {listing.allergens && (
+                  <div style={{ marginLeft: 'auto', fontSize: '0.75rem', color: '#ef4444', fontStyle: 'italic', maxWidth: '80px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    ⚠️ {listing.allergens}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </Card>
       </div>
     );

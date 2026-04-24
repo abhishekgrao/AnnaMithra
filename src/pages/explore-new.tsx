@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { ExploreTabs } from '../components/explore/ExploreTabs';
 import { ListingCard } from '../components/explore/ListingCard';
 import { MapView } from '../components/explore/MapView';
-import { fetchListings, Listing } from '../services/supabaseListings';
+import { fetchListings } from '../services/supabaseListings';
+import type { Listing } from '../services/supabaseListings';
 import { Loader } from '../components/ui/Loader';
 import { supabase } from '../lib/supabase';
 
@@ -109,7 +110,7 @@ export const ExploreNew: React.FC = () => {
 
         {loading ? (
           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flex: 1 }}>
-            <Loader />
+            <Loader onComplete={() => {}} />
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', paddingBottom: '40px' }}>
@@ -122,7 +123,7 @@ export const ExploreNew: React.FC = () => {
                 <div 
                   key={listing.id} 
                   data-id={listing.id}
-                  ref={el => listingRefs.current[listing.id] = el}
+                  ref={(el) => { listingRefs.current[listing.id] = el; }}
                 >
                   <ListingCard 
                     listing={listing} 
