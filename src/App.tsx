@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { supabase } from './lib/supabase';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Navbar } from './components/layout/Navbar';
 import { ProtectedRoute } from './components/layout/ProtectedRoute';
@@ -19,6 +20,15 @@ import './App.css';
 function App() {
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [showLoader, setShowLoader] = useState(true);
+  const [isAuth, setIsAuth] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setIsAuth(!!data.session));
+    const { data: listener } = supabase.auth.onAuthStateChange((_e, session) => {
+      setIsAuth(!!session);
+    });
+    return () => listener.subscription.unsubscribe();
+  }, []);
 
   useEffect(() => {
     const t1 = setTimeout(() => {
@@ -50,7 +60,7 @@ function App() {
             <Route path="/" element={<Login />} />
             <Route path="/landing" element={<Landing />} />
             <Route path="/login" element={<Login />} />
-            
+
             {/* Protected Routes */}
             <Route path="/explore" element={<ProtectedRoute><Explore /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
@@ -61,7 +71,7 @@ function App() {
           </Routes>
         </main>
         <Toast messages={toasts} onRemove={removeToast} />
-        {localStorage.getItem('isAuthenticated') === 'true' && <GeminiChat />}
+        {isAuth && <GeminiChat />}
       </Router>
     </>
   );

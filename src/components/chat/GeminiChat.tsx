@@ -33,7 +33,7 @@ export const GeminiChat: React.FC = () => {
           .select('*')
           .eq('id', user.id)
           .single();
-        
+
         if (profile) {
           setUserProfile(profile);
           // Personalized greeting
@@ -136,18 +136,20 @@ export const GeminiChat: React.FC = () => {
         ${userProfile.role === 'donor' ? 'Metrics: 124 Items Donated this month, ₹4,500 Tax Benefits eligible.' : 'NGO Dashboard: View nearby donations and manage claims.'}
       ` : 'User is a guest.';
 
-      const listingsContext = allListings.length > 0 
+      const listingsContext = allListings.length > 0
         ? `Current Active Food Listings: ${JSON.stringify(allListings)}`
         : "No active food listings currently available.";
 
-      // Map history for Gemini
-      const history = messages.map(m => ({
-        role: m.role === 'user' ? 'user' : 'model',
-        parts: [{ text: m.text }]
-      }));
+      // Map history for Gemini – skip error messages
+      const history = messages
+        .filter(m => !m.text.includes('trouble connecting'))
+        .map(m => ({
+          role: m.role === 'user' ? 'user' : 'model',
+          parts: [{ text: m.text }]
+        }));
 
       const contextEnhancedMessage = `User Identity: ${userContext}\n\nListings: ${listingsContext}\n\nUser Question: ${userMessage}`;
-      const response = await getGeminiResponse(history, contextEnhancedMessage);
+      const response = await getGeminiResponse(history, contextEnhancedMessage, listingsContext);
       setMessages(prev => [...prev, { role: 'ai', text: response }]);
     } catch (error: any) {
       console.error('Chat error:', error);
@@ -223,14 +225,14 @@ export const GeminiChat: React.FC = () => {
       ) : (
         <div className="chat-bubble" onClick={() => setIsOpen(true)}>
           <MessageSquare size={28} />
-          <div style={{ 
-            position: 'absolute', 
-            top: -5, 
-            right: -5, 
-            background: '#22c55e', 
-            color: 'white', 
-            fontSize: '10px', 
-            padding: '2px 6px', 
+          <div style={{
+            position: 'absolute',
+            top: -5,
+            right: -5,
+            background: '#22c55e',
+            color: 'white',
+            fontSize: '10px',
+            padding: '2px 6px',
             borderRadius: '10px',
             fontWeight: 'bold',
             boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
