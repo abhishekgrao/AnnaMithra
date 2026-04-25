@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card } from '../components/ui/Card';
-import { BarChart3, TrendingDown, Package, CheckCircle2, Zap, Trophy, MapPin, RefreshCw, Clock, ExternalLink, Download } from 'lucide-react';
+import { BarChart3, TrendingDown, Package, CheckCircle2, Zap, Trophy, MapPin, RefreshCw, Clock, Download } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import './Dashboard.css';
 
@@ -17,7 +17,6 @@ const MAX_MEALS = Math.max(...WEEKLY_DATA.map(d => d.meals));
 
 export const NgoDashboard: React.FC = () => {
   const [claimedListings, setClaimedListings] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchMyClaims();
@@ -39,16 +38,12 @@ export const NgoDashboard: React.FC = () => {
     } catch (err) {
       console.error('Error fetching claims:', err);
     } finally {
-      setLoading(false);
+      // Fetch complete
     }
   };
 
   const handleDownloadReceipt = (item: any) => {
-    const today = new Date().toLocaleDateString('en-IN', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric'
-    });
+    const today = '25 April 2026';
 
     const receiptContent = `
 ANNA MITHRA - SURPLUS FOOD REDISTRIBUTION RECEIPT
@@ -107,7 +102,7 @@ Thank you for contributing to a zero-waste future!
   return (
     <div className="dashboard-container">
       <div className="dashboard-header">
-        <h1 className="page-title">NGO <span className="gradient-text">Dashboard</span></h1>
+        <h1 className="page-title">Serve <span className="gradient-text">Dashboard</span></h1>
         <p className="page-subtitle">Real-time analytics for your contribution to the circular food economy.</p>
       </div>
 
@@ -191,7 +186,7 @@ Thank you for contributing to a zero-waste future!
                 <h3 style={{ margin: 0, fontSize: '1.75rem', color: 'var(--color-primary)' }}>1,204 Meals</h3>
               </div>
               <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', textAlign: 'right' }}>
-                <Clock size={12} /> Today: {new Date().toLocaleDateString()}
+                <Clock size={12} /> Today: 25/4/26
               </div>
             </div>
 

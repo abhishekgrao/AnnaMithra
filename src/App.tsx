@@ -12,6 +12,7 @@ import { Login } from './pages/Login';
 import { Profile } from './pages/Profile';
 import { Toast } from './components/ui/Toast';
 import { Loader } from './components/ui/Loader';
+import { GeminiChat } from './components/chat/GeminiChat';
 import type { ToastMessage } from './components/ui/Toast';
 import './App.css';
 
@@ -60,6 +61,7 @@ function App() {
           </Routes>
         </main>
         <Toast messages={toasts} onRemove={removeToast} />
+        {localStorage.getItem('isAuthenticated') === 'true' && <GeminiChat />}
       </Router>
     </>
   );

@@ -6,7 +6,7 @@
   z-index: 1000;
   padding: 0 32px;
   height: 64px;
-  background: rgba(255, 247, 226, 0.85);
+  background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid rgba(139, 161, 148, 0.25);
@@ -129,7 +129,7 @@
     bottom: 20px;
     left: 50%;
     transform: translateX(-50%);
-    background: rgba(255, 247, 226, 0.95);
+    background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(25px);
     -webkit-backdrop-filter: blur(25px);
     border: 1px solid rgba(139, 161, 148, 0.4);
@@ -173,7 +173,7 @@
   z-index: 1000;
   padding: 0 32px;
   height: 64px;
-  background: rgba(255, 247, 226, 0.85);
+  background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid rgba(139, 161, 148, 0.25);
@@ -296,7 +296,7 @@
     bottom: 20px;
     left: 50%;
     transform: translateX(-50%);
-    background: rgba(255, 247, 226, 0.95);
+    background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(25px);
     -webkit-backdrop-filter: blur(25px);
     border: 1px solid rgba(139, 161, 148, 0.4);

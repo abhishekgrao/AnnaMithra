@@ -106,7 +106,7 @@
 }
 .blob-3 {
   width: 130px; height: 130px;
-  background: radial-gradient(circle, rgba(255, 247, 226, 0.9), rgba(139, 161, 148, 0.3));
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.9), rgba(139, 161, 148, 0.3));
   top: 45%; right: 48%;
   animation-delay: -4s;
 }

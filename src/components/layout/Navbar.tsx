@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Home, Upload, MapPin, LayoutDashboard, Star, Bell, LogOut, LogIn } from 'lucide-react';
+import { Upload, MapPin, LayoutDashboard, Star, Bell, LogOut, LogIn } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import './Navbar.css';
 

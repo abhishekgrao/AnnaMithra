@@ -99,7 +99,7 @@ export const Login: React.FC = () => {
         <Card className="auth-card glass">
           <div className="auth-header">
             <h2>{isLogin ? 'Welcome Back' : 'Join the Network'}</h2>
-            <p>{isLogin ? 'Sign in to your AnnaMithra account' : 'Create your verified donor/ngo profile'}</p>
+            <p>{isLogin ? 'Sign in to your AnnaMithra account' : 'Select "Rescue" to list food or "Serve" to claim'}</p>
           </div>
 
           <form onSubmit={handleAuth} className="auth-form">
@@ -120,8 +120,8 @@ export const Login: React.FC = () => {
                     value={role} 
                     onChange={(e) => setRole(e.target.value)}
                   >
-                    <option value="shop">Shop</option>
-                    <option value="ngo">NGO</option>
+                    <option value="shop">Rescue (List Surplus Food)</option>
+                    <option value="ngo">Serve (Distribute Food)</option>
                   </select>
                 </div>
               </>
@@ -187,7 +187,7 @@ export const Login: React.FC = () => {
                       // Create profile
                       await supabase.from('profiles').insert([{ id: (await supabase.auth.getUser()).data.user?.id, full_name: 'Test NGO', role: testRole }]);
                       
-                      alert('Test NGO account created! Clicking again will log you in.');
+                      alert('Test Serve account created! Clicking again will log you in.');
                     } else if (data.user) {
                       const { data: profile } = await supabase.from('profiles').select('role').eq('id', data.user.id).single();
                       localStorage.setItem('isAuthenticated', 'true');
@@ -200,9 +200,10 @@ export const Login: React.FC = () => {
                     setIsLoading(false);
                   }
                 }}
-                style={{ borderColor: 'var(--color-primary)', color: 'var(--color-primary)', flex: 1, padding: '0 8px', fontSize: '0.9rem' }}
+                style={{ borderColor: 'var(--color-primary)', color: 'var(--color-primary)', flex: 1, padding: '0 8px', height: 'auto', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '4px', paddingBlock: '12px' }}
               >
-                🏢 NGO
+                <div style={{ fontSize: '1.1rem', fontWeight: 700 }}>🤲 Serve</div>
+                <div style={{ fontSize: '0.65rem', opacity: 0.8, lineHeight: 1.2 }}>Claim & distribute to those in need</div>
               </Button>
 
               <Button 
@@ -236,7 +237,7 @@ export const Login: React.FC = () => {
                       // Create profile
                       await supabase.from('profiles').insert([{ id: (await supabase.auth.getUser()).data.user?.id, full_name: 'Test Supermarket', role: testRole }]);
                       
-                      alert('Test Supermarket account created! Clicking again will log you in.');
+                      alert('Test Rescue account created! Clicking again will log you in.');
                     } else if (data.user) {
                       const { data: profile } = await supabase.from('profiles').select('role').eq('id', data.user.id).single();
                       localStorage.setItem('isAuthenticated', 'true');
@@ -249,9 +250,10 @@ export const Login: React.FC = () => {
                     setIsLoading(false);
                   }
                 }}
-                style={{ borderColor: 'var(--color-primary)', color: 'var(--color-primary)', flex: 1, padding: '0 8px', fontSize: '0.9rem' }}
+                style={{ borderColor: 'var(--color-primary)', color: 'var(--color-primary)', flex: 1, padding: '0 8px', height: 'auto', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '4px', paddingBlock: '12px' }}
               >
-                🛒 Shop
+                <div style={{ fontSize: '1.1rem', fontWeight: 700 }}>🥦 Rescue</div>
+                <div style={{ fontSize: '0.65rem', opacity: 0.8, lineHeight: 1.2 }}>List & manage surplus food</div>
               </Button>
             </div>
           </form>

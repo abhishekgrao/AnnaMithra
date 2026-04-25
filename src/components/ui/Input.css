@@ -9,7 +9,7 @@
 .input-field {
   width: 100%;
   padding: 12px 16px;
-  background: rgba(255, 247, 226, 0.8);
+  background: #ffffff;
   border: 1.5px solid rgba(139, 161, 148, 0.35);
   border-radius: var(--radius-md);
   font-family: var(--font-main);

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { Package, MapPin, Navigation, Info } from 'lucide-react';
+
 
 interface Listing {
   id: string;

@@ -7,136 +7,12 @@ import { ListingMap } from '../components/explore/ListingMap';
 import { supabase } from '../lib/supabase';
 import './Explore.css';
 
-interface FoodItem {
-  id: string;
-  name: string;
-  type: string;
-  quantity: string;
-  distance: string;
-  expiry: string;
-  donor: string;
-  urgencyScore: number; // 0-100
-  urgencyLevel: 'high' | 'medium' | 'low';
-  urgencyLabel: string;
-  verified: boolean;
-  demand: string;
-  // Safety & System Data
-  foodType?: string;
-  preparedAt?: string;
-  storageTempType?: string;
-  currentTemp?: string;
-  packagingType?: string;
-  storageEnv?: string;
-  maxSafeDuration?: string;
-  remainingSafeTime?: string;
-  safetyBuffer?: string;
-  transportFeasible?: string;
-  vendorTrustScore?: number;
-  pastAccuracyScore?: number;
-}
-
-const MOCK_FOOD_ITEMS: FoodItem[] = [
-  {
-    id: '1', name: 'KFC Fried Chicken Bucket', type: 'Fast Food',
-    quantity: '15 pieces', distance: '0.8 km', expiry: '30 mins',
-    donor: 'KFC', urgencyScore: 95, urgencyLevel: 'high',
-    urgencyLabel: '⚡ High Priority - 30 min', verified: true, demand: 'Very High',
-    latitude: 12.3260, longitude: 76.6127,
-    foodType: 'Deep Fried Meat (TCS Food)', preparedAt: '20:30',
-    storageTempType: 'Ambient / Cooling', currentTemp: '42°C (Danger Zone)',
-    packagingType: 'Vented Cardboard Bucket', storageEnv: 'Countertop',
-    maxSafeDuration: '4 hrs', remainingSafeTime: '30 mins', safetyBuffer: '0 mins',
-    transportFeasible: '⚠️ MARGINAL', vendorTrustScore: 88, pastAccuracyScore: 95
-  },
-  {
-    id: '2', name: 'Veg Dum Biryani', type: 'Main Course',
-    quantity: '10 portions', distance: '1.2 km', expiry: '4 hours',
-    donor: 'Taj Hotel', urgencyScore: 60, urgencyLevel: 'medium',
-    urgencyLabel: '⏰ Medium - 4 hr', verified: true, demand: 'High',
-    latitude: 12.3346, longitude: 76.5619,
-    foodType: 'Mixed Cooked Rice & Veg', preparedAt: '22:00',
-    storageTempType: 'Heated', currentTemp: '65°C',
-    packagingType: 'Sealed Alum Containers', storageEnv: 'Warming Cabinet',
-    maxSafeDuration: '6+ hrs', remainingSafeTime: '4 hrs', safetyBuffer: '-30 mins',
-    transportFeasible: '✅ YES', vendorTrustScore: 98, pastAccuracyScore: 99
-  },
-  {
-    id: '3', name: 'Masala Dosa & Sambar', type: 'South Indian',
-    quantity: '5 portions', distance: '2.5 km', expiry: '1 hour',
-    donor: 'MTR (Mavalli Tiffin Room)', urgencyScore: 85, urgencyLevel: 'high',
-    urgencyLabel: '⚡ High Priority - 1 hr', verified: false, demand: 'Medium',
-    latitude: 12.3213, longitude: 76.6183,
-    foodType: 'Fermented Batter Crepe & Stew', preparedAt: '21:30',
-    storageTempType: 'Mixed (Dosa/Sambar)', currentTemp: 'Sambar 68°C / Dosa 32°C',
-    packagingType: 'Foil Wraps & Plastic Tubs', storageEnv: 'Prep Table',
-    maxSafeDuration: '4 hrs', remainingSafeTime: '1 hr 30 mins', safetyBuffer: '-30 mins',
-    transportFeasible: '✅ YES', vendorTrustScore: 95, pastAccuracyScore: 92
-  },
-  {
-    id: '4', name: 'McDonald\'s Happy Meals', type: 'Fast Food',
-    quantity: '3 meals', distance: '3.1 km', expiry: '5 hours',
-    donor: 'McDonald\'s', urgencyScore: 30, urgencyLevel: 'low',
-    urgencyLabel: '✅ Low Priority - 5 hr', verified: true, demand: 'Low',
-    latitude: 12.3382, longitude: 76.6019,
-    foodType: 'Burgers & Fries', preparedAt: '23:00',
-    storageTempType: 'Chilled', currentTemp: '4°C',
-    packagingType: 'Paper Bags & Cardboard', storageEnv: 'Walk-in Fridge',
-    maxSafeDuration: '2-3 days', remainingSafeTime: '6 hrs', safetyBuffer: '-1 hr',
-    transportFeasible: '✅ YES', vendorTrustScore: 85, pastAccuracyScore: 89
-  },
-  {
-    id: '5', name: 'Paneer Butter Masala', type: 'North Indian',
-    quantity: '20 portions', distance: '0.4 km', expiry: '45 mins',
-    donor: 'Haldiram\'s', urgencyScore: 92, urgencyLevel: 'high',
-    urgencyLabel: '⚡ High Priority - 45 min', verified: true, demand: 'Very High',
-    latitude: 12.3232, longitude: 76.6278,
-    foodType: 'Dairy-Based Gravy (High Risk)', preparedAt: '20:45',
-    storageTempType: 'Cooling / Ambient', currentTemp: '48°C (Danger Zone)',
-    packagingType: 'Sealed Plastic Tubs', storageEnv: 'Countertop',
-    maxSafeDuration: '4 hrs', remainingSafeTime: '45 mins', safetyBuffer: '0 mins',
-    transportFeasible: '✅ YES (Barely)', vendorTrustScore: 92, pastAccuracyScore: 94
-  },
-  {
-    id: '6', name: 'Chole Bhature', type: 'North Indian',
-    quantity: '8 portions', distance: '1.8 km', expiry: '8 hours',
-    donor: 'Bikanerwala', urgencyScore: 20, urgencyLevel: 'low',
-    urgencyLabel: '✅ Low Priority - 8 hr', verified: true, demand: 'Moderate',
-    latitude: 12.3396, longitude: 76.6201,
-    foodType: 'Spiced Chickpea & Bread', preparedAt: '22:30',
-    storageTempType: 'Cold Storage', currentTemp: '3°C',
-    packagingType: 'Microwavable Containers', storageEnv: 'Commercial Fridge',
-    maxSafeDuration: '3-4 days', remainingSafeTime: '9 hrs', safetyBuffer: '-1 hr',
-    transportFeasible: '✅ YES', vendorTrustScore: 90, pastAccuracyScore: 88
-  },
-  {
-    id: '7', name: 'Buffet surplus (rice, curries, desserts)', type: '5⭐ Buffet',
-    quantity: '~40 servings', distance: '1.8 km', expiry: '45 mins',
-    donor: 'Radisson Blu Plaza', urgencyScore: 96, urgencyLevel: 'high',
-    urgencyLabel: '⚡ High Priority - 45 min', verified: true, demand: 'Very High',
-    latitude: 12.299551, longitude: 76.664234,
-    foodType: 'Mixed Buffet (Rice/Gravies)', preparedAt: '20:00',
-    storageTempType: 'Heated', currentTemp: '62°C',
-    packagingType: 'Buffet Trays / Foils', storageEnv: 'Bain-marie (Hot)',
-    maxSafeDuration: '6 hrs', remainingSafeTime: '2 hrs', safetyBuffer: '-1 hr 15m',
-    transportFeasible: '✅ YES', vendorTrustScore: 97, pastAccuracyScore: 96
-  },
-  {
-    id: '8', name: 'South Indian + Continental mains', type: 'Luxury Dining',
-    quantity: '~30 plates', distance: '2.3 km', expiry: '1 hour',
-    donor: 'Grand Mercure', urgencyScore: 75, urgencyLevel: 'high',
-    urgencyLabel: '⚡ High Priority - 1 hr', verified: true, demand: 'High',
-    latitude: 12.295921, longitude: 76.639982,
-    foodType: 'Mixed Cuisine (Pasta/Curry)', preparedAt: '21:15',
-    storageTempType: 'Cooling', currentTemp: '55°C (Danger Zone)',
-    packagingType: 'Commercial Food Pans', storageEnv: 'Kitchen Staging',
-    maxSafeDuration: '4 hrs', remainingSafeTime: '1 hr 30 mins', safetyBuffer: '-30 mins',
-    transportFeasible: '✅ YES', vendorTrustScore: 94, pastAccuracyScore: 91
-  },
-];
+import { type FoodItem, MOCK_FOOD_ITEMS } from '../data/mockData';
 
 export const Explore: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<'all' | 'high' | 'medium' | 'low'>('all');
+  const [distFilter, setDistFilter] = useState<'all' | 'sell' | 'donate'>('all');
   const [items, setItems] = useState<FoodItem[]>(MOCK_FOOD_ITEMS);
   const [claimedIds, setClaimedIds] = useState<string[]>([]);
   const [selectedFoodId, setSelectedFoodId] = useState<string | null>(null);
@@ -225,7 +101,8 @@ export const Explore: React.FC = () => {
             protein: d.protein,
             carbs: d.carbs,
             fat: d.fat,
-            allergens: d.allergens
+            allergens: d.allergens,
+            distributionType: d.distribution_type || 'both'
           };
         });
 
@@ -256,7 +133,13 @@ export const Explore: React.FC = () => {
     const matchSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.type.toLowerCase().includes(searchQuery.toLowerCase());
     const matchFilter = filter === 'all' || item.urgencyLevel === filter;
-    return matchSearch && matchFilter && !claimedIds.includes(item.id);
+    
+    // Distribution Filter Logic
+    let matchDist = true;
+    if (distFilter === 'sell') matchDist = item.distributionType === 'sell' || item.distributionType === 'both';
+    if (distFilter === 'donate') matchDist = item.distributionType === 'donate' || item.distributionType === 'both';
+    
+    return matchSearch && matchFilter && matchDist && !claimedIds.includes(item.id);
   });
 
   const handleConfirmClaim = async () => {
@@ -462,6 +345,41 @@ export const Explore: React.FC = () => {
         <p className="page-subtitle">Real-time surplus food available, sorted by urgency. Claim before it expires!</p>
       </div>
 
+      {/* Top Distribution Filter Toggle */}
+      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '24px' }}>
+        <div style={{ 
+          background: 'rgba(79, 99, 61, 0.05)', 
+          padding: '6px', 
+          borderRadius: '20px', 
+          display: 'flex', 
+          gap: '4px',
+          border: '1px solid rgba(79, 99, 61, 0.1)',
+          boxShadow: '0 4px 15px rgba(0,0,0,0.02)'
+        }}>
+          {(['all', 'sell', 'donate'] as const).map((mode) => (
+            <button
+              key={mode}
+              onClick={() => setDistFilter(mode)}
+              style={{
+                padding: '10px 28px',
+                borderRadius: '16px',
+                border: 'none',
+                background: distFilter === mode ? 'var(--color-primary)' : 'transparent',
+                color: distFilter === mode ? 'white' : 'var(--color-text-muted)',
+                fontWeight: 700,
+                cursor: 'pointer',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                textTransform: 'uppercase',
+                fontSize: '0.8rem',
+                letterSpacing: '0.5px'
+              }}
+            >
+              {mode}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div className="search-filter-bar glass" id="map-anchor">
         <div className="search-input-wrap">
           <Search className="search-icon" size={18} />
@@ -521,11 +439,16 @@ export const Explore: React.FC = () => {
                   {item.urgencyLabel}
                 </span>
               </div>
-              <div className="food-card-title-row">
-                <h3 className="food-name">{item.name}</h3>
-                {item.verified && (
-                  <span className="verified-badge"><ShieldCheck size={14} /> Verified</span>
-                )}
+              <div className="food-card-title-row" style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-start' }}>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                  {item.distributionType === 'sell' && <span style={{ background: 'rgba(34, 197, 94, 0.1)', color: '#22c55e', padding: '4px 10px', borderRadius: '20px', fontSize: '0.7rem', fontWeight: 800 }}>🟢 SELL</span>}
+                  {item.distributionType === 'both' && <span style={{ background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b', padding: '4px 10px', borderRadius: '20px', fontSize: '0.7rem', fontWeight: 800 }}>🟡 BOTH</span>}
+                  {item.distributionType === 'donate' && <span style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', padding: '4px 10px', borderRadius: '20px', fontSize: '0.7rem', fontWeight: 800 }}>🔵 DONATE</span>}
+                  {item.verified && (
+                    <span className="verified-badge"><ShieldCheck size={14} /> Verified</span>
+                  )}
+                </div>
+                <h3 className="food-name" style={{ margin: 0 }}>{item.name}</h3>
               </div>
               <p className="donor-name">from {item.donor}</p>
 

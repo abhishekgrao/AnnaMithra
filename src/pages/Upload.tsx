@@ -34,6 +34,12 @@ const DIETARY_INFO = [
   { value: 'Nut Free', label: 'Nut Free' },
 ];
 
+const DISTRIBUTION_TYPES = [
+  { value: 'sell', label: '🟢 Sell (Preferred for packaged/bakery)' },
+  { value: 'donate', label: '🔵 Donate (Better for high urgency)' },
+  { value: 'both', label: '🟡 Both (Flexible)' },
+];
+
 export const Upload: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -54,6 +60,8 @@ export const Upload: React.FC = () => {
   const [errorMsg, setErrorMsg] = useState('');
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
+  const [foodPhoto, setFoodPhoto] = useState<File | null>(null);
+  const [foodPhotoUrl, setFoodPhotoUrl] = useState<string | null>(null);
 
   // Safety & Logistics State
   const [foodType, setFoodType] = useState('');
@@ -62,11 +70,24 @@ export const Upload: React.FC = () => {
   const [currentTemp, setCurrentTemp] = useState('');
   const [packagingType, setPackagingType] = useState('');
   const [storageEnv, setStorageEnv] = useState('');
+  const [distributionType, setDistributionType] = useState<'sell' | 'donate' | 'both'>('both');
+  const [pickupWindow, setPickupWindow] = useState('');
+  const [vehicleRequirement, setVehicleRequirement] = useState('Any');
+  const [accessInstructions, setAccessInstructions] = useState('');
+  const [activeSection, setActiveSection] = useState<string | null>(null);
 
   // Nutrition Search State
   const [isSearching, setIsSearching] = useState(false);
   const [nutrition, setNutrition] = useState<NutritionData | null>(null);
   const [nutritionMessage, setNutritionMessage] = useState('');
+  const [isManualNutrition, setIsManualNutrition] = useState(false);
+  const [manualNutrition, setManualNutrition] = useState({
+    calories: '',
+    protein: '',
+    carbs: '',
+    fat: '',
+    allergens: ''
+  });
   
   const allChecked = checkedItems.every(Boolean);
 
@@ -90,6 +111,17 @@ export const Upload: React.FC = () => {
       );
     }
   };
+
+  React.useEffect(() => {
+    const lowTitle = title.toLowerCase();
+    if (category === 'Bakery' || lowTitle.includes('bread') || lowTitle.includes('bun') || lowTitle.includes('biscuit')) {
+      setDistributionType('sell');
+    } else if (category === 'Main Course' || category === 'Dessert') {
+      setDistributionType('both');
+    } else if (category === 'Raw' || category === 'Healthy') {
+      setDistributionType('donate');
+    }
+  }, [category, title]);
 
   const handleMapsLinkParse = () => {
     if (!mapsLink) return;
@@ -124,12 +156,22 @@ export const Upload: React.FC = () => {
         if (data.calories < 100) setCategory('Healthy');
       } else {
         setNutrition(null);
-        setNutritionMessage('No nutritional data found for this item.');
+        setNutritionMessage('No nutritional data found. Please enter manually below.');
+        setIsManualNutrition(true);
       }
     } catch (err) {
       setNutritionMessage('Error fetching nutritional data.');
     } finally {
       setIsSearching(false);
+    }
+  };
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setFoodPhoto(file);
+      const url = URL.createObjectURL(file);
+      setFoodPhotoUrl(url);
     }
   };
 
@@ -164,12 +206,12 @@ export const Upload: React.FC = () => {
           source: user.email?.split('@')[0] || 'Community Donor',
           type: 'donation',
           urgency_score: 50, // Default mid urgency
-          calories: nutrition?.calories,
-          protein: nutrition?.protein,
-          carbs: nutrition?.carbs,
-          fat: nutrition?.fat,
-          allergens: nutrition?.allergens,
-          nutrition_source: nutrition ? 'open_food_facts' : null,
+          calories: isManualNutrition ? parseFloat(manualNutrition.calories) : nutrition?.calories,
+          protein: isManualNutrition ? manualNutrition.protein : nutrition?.protein,
+          carbs: isManualNutrition ? manualNutrition.carbs : nutrition?.carbs,
+          fat: isManualNutrition ? manualNutrition.fat : nutrition?.fat,
+          allergens: isManualNutrition ? manualNutrition.allergens : nutrition?.allergens,
+          nutrition_source: isManualNutrition ? 'manual' : (nutrition ? 'open_food_facts' : null),
           // Safety & System Data
           food_type: foodType,
           prepared_at: preparedAt,
@@ -179,7 +221,12 @@ export const Upload: React.FC = () => {
           storage_env: storageEnv,
           vendor_trust_score: 95, // Default for new donors
           past_accuracy_score: 100,
-          transport_feasible: '✅ YES'
+          transport_feasible: '✅ YES',
+          distribution_type: distributionType,
+          pickup_window: pickupWindow,
+          vehicle_requirement: vehicleRequirement,
+          access_instructions: accessInstructions,
+          image_url: foodPhotoUrl || 'https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&q=80'
         }
       ]);
 
@@ -253,6 +300,30 @@ export const Upload: React.FC = () => {
                   rightIcon={isSearching ? <RefreshCw size={18} className="animate-spin" /> : <Search size={18} />}
                   onIconClick={handleSearch}
                 />
+
+                <div style={{ marginTop: '16px', marginBottom: '16px' }}>
+                  <input 
+                    type="file" 
+                    id="food-photo-input" 
+                    accept="image/*" 
+                    capture="environment" 
+                    style={{ display: 'none' }} 
+                    onChange={handlePhotoChange}
+                  />
+                  <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={() => document.getElementById('food-photo-input')?.click()}
+                      style={foodPhotoUrl ? { borderColor: 'var(--color-primary)', background: 'rgba(79, 99, 61, 0.05)' } : {}}
+                    >
+                      <Camera size={18} /> {foodPhotoUrl ? 'Photo Added ✓' : 'Add Food Photo'}
+                    </Button>
+                    {foodPhotoUrl && (
+                      <img src={foodPhotoUrl} alt="Preview" style={{ width: '50px', height: '50px', borderRadius: '8px', objectFit: 'cover' }} />
+                    )}
+                  </div>
+                </div>
                 
                 {/* Nutrition Card */}
                 {(nutrition || nutritionMessage) && (
@@ -299,6 +370,96 @@ export const Upload: React.FC = () => {
                     )}
                   </div>
                 )}
+
+                <div style={{ marginTop: '16px', borderTop: '1px dashed rgba(0,0,0,0.1)', paddingTop: '16px' }}>
+                  <button 
+                    type="button"
+                    onClick={() => setIsManualNutrition(!isManualNutrition)}
+                    style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '8px', 
+                      background: 'none', 
+                      border: 'none', 
+                      padding: 0, 
+                      cursor: 'pointer',
+                      color: 'var(--color-primary)',
+                      fontWeight: 600,
+                      fontSize: '0.85rem'
+                    }}
+                  >
+                    {isManualNutrition ? <CheckSquare size={18} /> : <Square size={18} />}
+                    Manual Nutrition & Allergen Info
+                  </button>
+                  
+                  {isManualNutrition && (
+                    <div className="manual-nutrition-grid" style={{ 
+                      display: 'grid', 
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', 
+                      gap: '10px',
+                      background: 'rgba(79, 99, 61, 0.04)',
+                      padding: '15px',
+                      borderRadius: '10px',
+                      marginTop: '12px'
+                    }}>
+                      <div className="form-group">
+                        <label className="input-label" style={{ fontSize: '0.75rem', marginBottom: '4px' }}>Cals (kcal)</label>
+                        <input 
+                          type="number"
+                          className="form-input"
+                          style={{ width: '100%', padding: '6px 10px', borderRadius: '6px', border: '1px solid rgba(0,0,0,0.1)', fontSize: '0.9rem' }}
+                          placeholder="250"
+                          value={manualNutrition.calories}
+                          onChange={(e) => setManualNutrition({...manualNutrition, calories: e.target.value})}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label className="input-label" style={{ fontSize: '0.75rem', marginBottom: '4px' }}>Protein (g)</label>
+                        <input 
+                          type="text"
+                          className="form-input"
+                          style={{ width: '100%', padding: '6px 10px', borderRadius: '6px', border: '1px solid rgba(0,0,0,0.1)', fontSize: '0.9rem' }}
+                          placeholder="12"
+                          value={manualNutrition.protein}
+                          onChange={(e) => setManualNutrition({...manualNutrition, protein: e.target.value})}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label className="input-label" style={{ fontSize: '0.75rem', marginBottom: '4px' }}>Carbs (g)</label>
+                        <input 
+                          type="text"
+                          className="form-input"
+                          style={{ width: '100%', padding: '6px 10px', borderRadius: '6px', border: '1px solid rgba(0,0,0,0.1)', fontSize: '0.9rem' }}
+                          placeholder="30"
+                          value={manualNutrition.carbs}
+                          onChange={(e) => setManualNutrition({...manualNutrition, carbs: e.target.value})}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label className="input-label" style={{ fontSize: '0.75rem', marginBottom: '4px' }}>Fat (g)</label>
+                        <input 
+                          type="text"
+                          className="form-input"
+                          style={{ width: '100%', padding: '6px 10px', borderRadius: '6px', border: '1px solid rgba(0,0,0,0.1)', fontSize: '0.9rem' }}
+                          placeholder="8"
+                          value={manualNutrition.fat}
+                          onChange={(e) => setManualNutrition({...manualNutrition, fat: e.target.value})}
+                        />
+                      </div>
+                      <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                        <label className="input-label" style={{ fontSize: '0.75rem', marginBottom: '4px' }}>Allergens (e.g. Milk, Nuts)</label>
+                        <input 
+                          type="text"
+                          className="form-input"
+                          style={{ width: '100%', padding: '6px 10px', borderRadius: '6px', border: '1px solid rgba(0,0,0,0.1)', fontSize: '0.9rem' }}
+                          placeholder="e.g. Contains Dairy and Gluten"
+                          value={manualNutrition.allergens}
+                          onChange={(e) => setManualNutrition({...manualNutrition, allergens: e.target.value})}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="form-row">
@@ -344,10 +505,27 @@ export const Upload: React.FC = () => {
               </div>
 
               {/* Safety & Logistics Data Section */}
-              <div style={{ marginTop: '32px', padding: '24px', background: 'rgba(79, 99, 61, 0.03)', borderRadius: '20px', border: '1px solid rgba(79, 99, 61, 0.1)' }}>
+              <div 
+                onClick={() => setActiveSection('safety')}
+                style={{ 
+                  marginTop: '32px', 
+                  padding: '24px', 
+                  background: activeSection === 'safety' ? 'rgba(79, 99, 61, 0.08)' : '#ffffff', 
+                  borderRadius: '20px', 
+                  border: '1px solid',
+                  borderColor: activeSection === 'safety' ? 'var(--color-primary)' : 'rgba(0,0,0,0.05)',
+                  transition: 'all 0.3s ease'
+                }}
+              >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
-                  <div style={{ padding: '8px', background: 'var(--color-primary)', color: 'white', borderRadius: '8px' }}>
-                    <ShieldCheck size={20} />
+                  <div style={{ 
+                    padding: '10px', 
+                    background: activeSection === 'safety' ? 'var(--color-primary)' : 'rgba(79, 99, 61, 0.1)', 
+                    color: activeSection === 'safety' ? 'white' : 'var(--color-primary)', 
+                    borderRadius: '12px',
+                    transition: 'all 0.3s ease'
+                  }}>
+                    <ShieldCheck size={24} />
                   </div>
                   <h3 style={{ margin: 0, fontSize: '1.2rem', color: 'var(--color-primary)' }}>Safety & Logistics Data</h3>
                 </div>
@@ -414,56 +592,156 @@ export const Upload: React.FC = () => {
                     />
                   </div>
                 </div>
+                <div className="form-row">
+                  <div className="form-group" style={{ width: '100%' }}>
+                    <Select 
+                      label="Distribution Type (AI Suggested)" 
+                      options={DISTRIBUTION_TYPES} 
+                      value={distributionType} 
+                      onChange={(val) => setDistributionType(val as any)} 
+                      required 
+                    />
+                    <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '4px' }}>
+                      Tip: System suggests <strong>{distributionType}</strong> based on food type, but you can override.
+                    </p>
+                  </div>
+                </div>
                 <p style={{ margin: '16px 0 0', fontSize: '0.8rem', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>
                   * This data allows our system to calculate high-precision <strong>Safety Buffers</strong> and <strong>Urgency Scores</strong>.
                 </p>
               </div>
 
-              <div className="form-group location-group">
-                <Input 
-                  label="Pickup Location / Address" 
-                  placeholder="Enter shop address or building name" 
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  required 
-                />
-                
-                <div style={{ marginTop: '16px' }}>
+              <div 
+                onClick={() => setActiveSection('location')}
+                style={{ 
+                  marginTop: '24px', 
+                  padding: '24px', 
+                  background: activeSection === 'location' ? 'rgba(79, 99, 61, 0.08)' : '#ffffff', 
+                  borderRadius: '20px', 
+                  border: '1px solid',
+                  borderColor: activeSection === 'location' ? 'var(--color-primary)' : 'rgba(0,0,0,0.05)',
+                  transition: 'all 0.3s ease'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+                  <div style={{ 
+                    background: activeSection === 'location' ? 'var(--color-primary)' : 'rgba(79, 99, 61, 0.1)', 
+                    color: activeSection === 'location' ? 'white' : 'var(--color-primary)', 
+                    padding: '10px', 
+                    borderRadius: '12px',
+                    transition: 'all 0.3s ease'
+                  }}>
+                    <MapPin size={24} />
+                  </div>
+                  <h3 style={{ margin: 0, fontSize: '1.2rem', color: 'var(--color-primary)' }}>Pickup & Location Data</h3>
+                </div>
+
+                <div className="form-group">
                   <Input 
-                    label="Google Maps Link (Auto-Fetch Coordinates)" 
-                    placeholder="Paste maps.google.com link here..." 
-                    value={mapsLink}
-                    onChange={(e) => setMapsLink(e.target.value)}
-                    rightIcon={<Search size={18} />}
-                    onIconClick={handleMapsLinkParse}
+                    label="Pickup Location / Address" 
+                    placeholder="Enter shop address or building name" 
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    required 
                   />
-                  <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '4px' }}>
-                    Tip: Search your location on Google Maps and paste the URL here to auto-pin your donation.
-                  </p>
+                  
+                  <div style={{ marginTop: '16px' }}>
+                    <Input 
+                      label="Google Maps Link (Auto-Fetch Coordinates)" 
+                      placeholder="Paste maps.google.com link here..." 
+                      value={mapsLink}
+                      onChange={(e) => setMapsLink(e.target.value)}
+                      rightIcon={<Search size={18} />}
+                      onIconClick={handleMapsLinkParse}
+                    />
+                    <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '4px' }}>
+                      Tip: Search your location on Google Maps and paste the URL here to auto-pin your donation.
+                    </p>
+                  </div>
+
+                  <div className="form-row" style={{ marginTop: '16px' }}>
+                    <div className="form-group">
+                      <Input 
+                        label="Latitude" 
+                        placeholder="e.g., 12.3396" 
+                        value={manualCoords.lat}
+                        onChange={(e) => setManualCoords(prev => ({ ...prev, lat: e.target.value }))}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <Input 
+                        label="Longitude" 
+                        placeholder="e.g., 76.6201" 
+                        value={manualCoords.lng}
+                        onChange={(e) => setManualCoords(prev => ({ ...prev, lng: e.target.value }))}
+                      />
+                    </div>
+                  </div>
+
+                  <button type="button" className="fetch-location-btn" style={{ marginTop: '12px' }} onClick={fetchLocation}>
+                    <MapPin size={15} /> Use My Current GPS
+                  </button>
+                </div>
+              </div>
+
+              {/* Logistics & Fulfillment Section */}
+              <div 
+                onClick={() => setActiveSection('logistics')}
+                style={{ 
+                  marginTop: '24px', 
+                  padding: '24px', 
+                  background: activeSection === 'logistics' ? 'rgba(79, 99, 61, 0.08)' : '#ffffff', 
+                  borderRadius: '20px', 
+                  border: '1px solid',
+                  borderColor: activeSection === 'logistics' ? 'var(--color-primary)' : 'rgba(0,0,0,0.05)',
+                  transition: 'all 0.3s ease'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+                  <div style={{ 
+                    background: activeSection === 'logistics' ? 'var(--color-primary)' : 'rgba(79, 99, 61, 0.1)', 
+                    color: activeSection === 'logistics' ? 'white' : 'var(--color-primary)', 
+                    padding: '10px', 
+                    borderRadius: '12px',
+                    transition: 'all 0.3s ease'
+                  }}>
+                    <UploadIcon size={24} />
+                  </div>
+                  <h3 style={{ margin: 0, fontSize: '1.2rem', color: 'var(--color-primary)' }}>Logistics & Fulfillment</h3>
                 </div>
 
-                <div className="form-row" style={{ marginTop: '16px' }}>
+                <div className="form-row">
                   <div className="form-group">
                     <Input 
-                      label="Latitude" 
-                      placeholder="e.g., 12.3396" 
-                      value={manualCoords.lat}
-                      onChange={(e) => setManualCoords(prev => ({ ...prev, lat: e.target.value }))}
+                      label="Preferred Pickup Window" 
+                      placeholder="e.g., Today 4PM - 6PM, Within 1 hour" 
+                      value={pickupWindow}
+                      onChange={(e) => setPickupWindow(e.target.value)}
                     />
                   </div>
                   <div className="form-group">
-                    <Input 
-                      label="Longitude" 
-                      placeholder="e.g., 76.6201" 
-                      value={manualCoords.lng}
-                      onChange={(e) => setManualCoords(prev => ({ ...prev, lng: e.target.value }))}
+                    <Select 
+                      label="Vehicle Requirement" 
+                      options={[
+                        { value: 'Any', label: 'Any Vehicle (Bike/Car)' },
+                        { value: 'Car', label: 'Car Required (Large volume)' },
+                        { value: 'Van', label: 'Van/Truck Required' },
+                        { value: 'Refrigerated', label: 'Refrigerated Transport Only' }
+                      ]} 
+                      value={vehicleRequirement} 
+                      onChange={setVehicleRequirement} 
                     />
                   </div>
                 </div>
 
-                <button type="button" className="fetch-location-btn" style={{ marginTop: '12px' }} onClick={fetchLocation}>
-                  <MapPin size={15} /> Use My Current GPS
-                </button>
+                <div className="form-group" style={{ marginTop: '16px' }}>
+                  <Input 
+                    label="Access & Handling Instructions" 
+                    placeholder="e.g., Parking available in basement, entry from Gate 2, heavy lifting" 
+                    value={accessInstructions}
+                    onChange={(e) => setAccessInstructions(e.target.value)}
+                  />
+                </div>
               </div>
 
               <div className="form-group">

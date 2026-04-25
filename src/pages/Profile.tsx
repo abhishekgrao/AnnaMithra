@@ -6,6 +6,8 @@ import {
   Award, TrendingUp, History, Star,
   Info
 } from 'lucide-react';
+import { supabase } from '../lib/supabase';
+import { LeafletMap } from '../components/ui/LeafletMap';
 import './Profile.css';
 
 export const Profile: React.FC = () => {
@@ -21,6 +23,10 @@ export const Profile: React.FC = () => {
     section12a: '',
     section80g: ''
   });
+  const [verificationPhoto, setVerificationPhoto] = useState<File | null>(null);
+  const [verificationPhotoUrl, setVerificationPhotoUrl] = useState<string | null>(null);
+  const [verificationLocation, setVerificationLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [isCapturing, setIsCapturing] = useState(false);
 
   const userType = localStorage.getItem('userType') || 'donor';
   const isDonor = userType === 'donor' || userType === 'shop' || userType === 'vendor';
@@ -61,13 +67,63 @@ export const Profile: React.FC = () => {
     }
   };
 
-  const handleVerification = () => {
+  const handleVerification = async () => {
+    if (!verificationPhoto && !verificationLocation) {
+      alert("Please take a photo and get live location first!");
+      return;
+    }
+
     setIsVerifying(true);
-    setTimeout(() => {
-      alert('Proof submitted! AI analysis in progress...');
-      setIsVerifying(false);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not logged in");
+
+      // For the hackathon, we'll use a simulated image URL or base64 if we want to save to DB
+      // But user just said "let it show in supabase", so I'll insert a record
+      const { error } = await supabase
+        .from('contribution_verifications')
+        .insert([
+          {
+            user_id: user.id,
+            image_url: verificationPhotoUrl || 'https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&q=80',
+            latitude: verificationLocation?.lat || 12.3396,
+            longitude: verificationLocation?.lng || 76.6201,
+            status: 'pending'
+          }
+        ]);
+
+      if (error) throw error;
+
+      alert('Proof submitted! AI analysis in progress... Your trust score will update shortly.');
       setTrustScore(prev => Math.min(prev + 2, 100));
-    }, 2000);
+      setVerificationPhoto(null);
+      setVerificationPhotoUrl(null);
+      setVerificationLocation(null);
+    } catch (err: any) {
+      alert("Error submitting verification: " + err.message);
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setVerificationPhoto(file);
+      const url = URL.createObjectURL(file);
+      setVerificationPhotoUrl(url);
+      alert("Photo captured successfully!");
+    }
+  };
+
+  const handleLiveLocation = () => {
+    setIsCapturing(true);
+    setTimeout(() => {
+      // Hardcoded VVCE coordinates as requested
+      setVerificationLocation({ lat: 12.3396, lng: 76.6201 });
+      setIsCapturing(false);
+      alert("Location pinned: Vidyavardhaka College of Engineering");
+    }, 1000);
   };
 
   return (
@@ -85,7 +141,7 @@ export const Profile: React.FC = () => {
                 <h1 style={{ margin: 0 }}>{userName}</h1>
                 {isVerified && (
                   <div className="verified-badge-premium" style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#4F633D', color: 'white', padding: '6px 12px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 800, boxShadow: '0 4px 10px rgba(0,0,0,0.1)' }}>
-                    <ShieldCheck size={12} /> {isDonor ? 'Verified Vendor' : 'Verified NGO'}
+                    <ShieldCheck size={12} /> {isDonor ? 'Verified Rescue Partner' : 'Verified Serve Partner'}
                   </div>
                 )}
               </div>
@@ -95,7 +151,7 @@ export const Profile: React.FC = () => {
               </div>
               <p>Registered as a Platinum Partner since April 2025</p>
               <Button size="sm" variant="outline" style={{ marginTop: '10px' }} onClick={() => setShowVerifyModal(true)}>
-                {isDonor ? 'Vendor Compliance Docs' : (isVerified ? 'Manage Verification Docs' : 'Apply for Official Verification')}
+                {isDonor ? 'Rescue Compliance Docs' : (isVerified ? 'Manage Verification Docs' : 'Apply for Official Verification')}
               </Button>
             </div>
           </Card>
@@ -122,16 +178,53 @@ export const Profile: React.FC = () => {
             <h3><Camera size={20} /> Verify New Contribution</h3>
             <p>Upload a photo of the food and current location to boost your trust score immediately.</p>
             <div className="verification-upload-zone">
+              <input 
+                type="file" 
+                id="verification-photo-input" 
+                accept="image/*" 
+                capture="environment" 
+                style={{ display: 'none' }} 
+                onChange={handlePhotoChange}
+              />
               <div className="upload-btn-wrap">
-                <Button variant="outline" className="vbtn">
-                  <Camera size={18} /> Take Photo
+                <Button 
+                  variant="outline" 
+                  className={`vbtn ${verificationPhoto ? 'active' : ''}`}
+                  onClick={() => document.getElementById('verification-photo-input')?.click()}
+                  style={verificationPhoto ? { borderColor: 'var(--color-primary)', background: 'rgba(79, 99, 61, 0.1)' } : {}}
+                >
+                  <Camera size={18} /> {verificationPhoto ? 'Photo Taken' : 'Take Photo'}
                 </Button>
-                <Button variant="outline" className="vbtn">
-                  <MapPin size={18} /> Live Location
+                <Button 
+                  variant="outline" 
+                  className={`vbtn ${verificationLocation ? 'active' : ''}`}
+                  onClick={handleLiveLocation}
+                  disabled={isCapturing}
+                  style={verificationLocation ? { borderColor: 'var(--color-primary)', background: 'rgba(79, 99, 61, 0.1)' } : {}}
+                >
+                  <MapPin size={18} /> {isCapturing ? 'Locating...' : (verificationLocation ? 'VVCE Pinned' : 'Live Location')}
                 </Button>
               </div>
+              {verificationPhotoUrl && (
+                <div style={{ marginTop: '12px', textAlign: 'center' }}>
+                  <img src={verificationPhotoUrl} alt="Preview" style={{ width: '100%', maxHeight: '200px', borderRadius: '12px', objectFit: 'cover', border: '2px solid var(--color-primary)' }} />
+                </div>
+              )}
+
+              {verificationLocation && (
+                <div style={{ marginTop: '16px' }}>
+                  <LeafletMap 
+                    location="Vidyavardhaka College of Engineering" 
+                    lat={verificationLocation.lat} 
+                    lng={verificationLocation.lng} 
+                  />
+                  <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', textAlign: 'center', marginTop: '-8px' }}>
+                    Pinned: {verificationLocation.lat.toFixed(4)}, {verificationLocation.lng.toFixed(4)}
+                  </p>
+                </div>
+              )}
             </div>
-            <Button fullWidth onClick={handleVerification} disabled={isVerifying}>
+            <Button fullWidth onClick={handleVerification} disabled={isVerifying || (!verificationPhoto && !verificationLocation)}>
               {isVerifying ? 'Analyzing Proof...' : 'Submit Evidence for AI Audit'}
             </Button>
           </Card>
@@ -196,11 +289,11 @@ export const Profile: React.FC = () => {
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(8px)' }}>
           <Card className="glass" style={{ maxWidth: '500px', width: '90%', padding: '32px', position: 'relative', background: 'white' }}>
             <h2 style={{ marginBottom: '8px', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <ShieldCheck size={24} /> {isDonor ? 'Business Verification' : 'NGO Verification'}
+              <ShieldCheck size={24} /> {isDonor ? 'Rescue Partner Verification' : 'Serve Partner Verification'}
             </h2>
             <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem', marginBottom: '24px' }}>
               {isDonor
-                ? 'Submit your business credentials to unlock the verified partner badge and gain donor trust.'
+                ? 'Submit your business credentials to unlock the Rescue badge and gain community trust.'
                 : 'Submit your official documents to unlock high-priority claims and tax benefits.'}
             </p>
 

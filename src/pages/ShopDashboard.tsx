@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card } from '../components/ui/Card';
-import { Package, Clock, MapPin, Activity, FileText, Download, Plus, Edit3, Trash2 } from 'lucide-react';
+import { Clock, MapPin, Activity, FileText, Download, Plus, Edit3, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { ConfirmationModal } from '../components/ui/ConfirmationModal';
@@ -19,7 +19,16 @@ export const ShopDashboard: React.FC = () => {
   const fetchMyListings = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      
+      const demoListings = [
+        { id: 'm1', title: 'Assorted Pastries', quantity: '20 items', status: 'Claimed', created_at: '2026-04-25T10:00:00Z', urgency_score: 85 },
+        { id: 'm2', title: 'Fresh Bread', quantity: '15 loaves', status: 'Available', created_at: '2026-04-25T11:00:00Z', urgency_score: 35 }
+      ];
+
+      if (!user) {
+        setMyListings(demoListings);
+        return;
+      }
       
       const { data, error } = await supabase
         .from('listings')
@@ -28,9 +37,14 @@ export const ShopDashboard: React.FC = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      if (data) setMyListings(data);
+      if (data) setMyListings([...data, ...demoListings]);
+      else setMyListings(demoListings);
     } catch (err) {
       console.error('Error fetching listings:', err);
+      setMyListings([
+        { id: 'm1', title: 'Assorted Pastries', quantity: '20 items', status: 'Claimed', created_at: '2026-04-25T10:00:00Z', urgency_score: 85 },
+        { id: 'm2', title: 'Fresh Bread', quantity: '15 loaves', status: 'Available', created_at: '2026-04-25T11:00:00Z', urgency_score: 35 }
+      ]);
     }
   };
 
@@ -43,17 +57,26 @@ export const ShopDashboard: React.FC = () => {
     if (!listingToCancel) return;
 
     try {
+      // Check if it's a mock item
+      if (listingToCancel.startsWith('m')) {
+        // Mock deletion - just filter locally
+        setMyListings(prev => prev.filter(item => item.id !== listingToCancel));
+        setListingToCancel(null);
+        setModalOpen(false);
+        return;
+      }
+
       const { error } = await supabase
         .from('listings')
         .delete()
-        .eq('id', listingToCancel)
-        .select();
+        .eq('id', listingToCancel);
 
       if (error) throw error;
       
       // Update local state
       setMyListings(prev => prev.filter(item => item.id !== listingToCancel));
       setListingToCancel(null);
+      setModalOpen(false);
     } catch (err) {
       console.error('Error deleting listing:', err);
       alert("Failed to cancel listing. Please try again.");
@@ -67,12 +90,12 @@ export const ShopDashboard: React.FC = () => {
       printWindow.document.write('<style>body { font-family: sans-serif; padding: 40px; color: #2a3520; } table { width: 100%; border-collapse: collapse; margin-top: 20px; } th, td { padding: 12px; border-bottom: 1px solid #ddd; text-align: left; } th { background: #f9f9f9; }</style>');
       printWindow.document.write('</head><body>');
       printWindow.document.write('<h1 style="color: #4F633D;">AnnaMithra - Official Donation Receipt</h1>');
-      printWindow.document.write('<p><strong>Shop Name:</strong> Demo Bakery</p>');
-      printWindow.document.write('<p><strong>Date:</strong> ' + new Date().toLocaleDateString() + '</p>');
+      printWindow.document.write('<p><strong>Rescue Partner:</strong> Demo Bakery</p>');
+      printWindow.document.write('<p><strong>Date:</strong> 25/4/26</p>');
       printWindow.document.write('<p><strong>Total Donated This Month:</strong> 124 Items</p>');
       printWindow.document.write('<p><strong>Estimated Tax Benefit Eligible:</strong> ₹ 4,500</p>');
       printWindow.document.write('<h3>Recent Donations (Eligible for 80G Tax Benefits)</h3>');
-      printWindow.document.write('<table><tr><th>Date</th><th>Food Donated</th><th>Quantity</th><th>NGO Name</th><th>Value (₹)</th></tr>');
+      printWindow.document.write('<table><tr><th>Date</th><th>Food Donated</th><th>Quantity</th><th>Serve Partner</th><th>Value (₹)</th></tr>');
       printWindow.document.write('<tr><td>Oct 12</td><td>Assorted Pastries</td><td>20 items</td><td>Hope NGO</td><td>₹ 800</td></tr>');
       printWindow.document.write('<tr><td>Oct 10</td><td>Fresh Bread</td><td>15 loaves</td><td>Smile Foundation</td><td>₹ 450</td></tr>');
       printWindow.document.write('<tr><td>Oct 08</td><td>Vegetable Curries</td><td>30 meals</td><td>Helping Hands</td><td>₹ 1,200</td></tr>');
@@ -112,13 +135,9 @@ export const ShopDashboard: React.FC = () => {
     }
   };
 
-  const activeListings = [
-    { id: 'm1', name: 'Assorted Pastries', qty: '20 items', time: '45 mins', urgency: 85, status: 'Claimed', ngo: 'Hope NGO', dist: '1.2 km', demand: 'High', date: new Date().toLocaleDateString() },
-    { id: 'm2', name: 'Fresh Bread', qty: '15 loaves', time: '3 hrs', urgency: 35, status: 'Available', ngo: null, dist: '0.8 km', demand: 'Medium', date: new Date().toLocaleDateString() }
-  ];
-
-  // Map supabase items to frontend structure
-  const dynamicListings = myListings.map((d: any) => {
+  // Map items to frontend structure
+  const allListings = myListings.map((d: any) => {
+    const isMock = d.id.startsWith('m');
     const expDate = d.expiry_time ? new Date(d.expiry_time) : new Date(Date.now() + (d.expiry_days || 1) * 86400000);
     const now = new Date();
     const hoursLeft = Math.max(0, (expDate.getTime() - now.getTime()) / (1000 * 60 * 60));
@@ -126,15 +145,15 @@ export const ShopDashboard: React.FC = () => {
     
     return {
       id: d.id,
-      name: d.title,
+      name: d.title || d.name,
       qty: d.quantity,
-      time: hoursLeft < 1 ? `${Math.round(hoursLeft * 60)} mins` : `${Math.round(hoursLeft)} hrs`,
-      urgency,
+      time: isMock ? (d.id === 'm1' ? '45 mins' : '3 hrs') : (hoursLeft < 1 ? `${Math.round(hoursLeft * 60)} mins` : `${Math.round(hoursLeft)} hrs`),
+      urgency: isMock ? (d.id === 'm1' ? 85 : 35) : urgency,
       status: d.status || 'Available',
-      ngo: null,
-      dist: '0.0 km (You)',
+      ngo: isMock && d.id === 'm1' ? 'Hope NGO' : null,
+      dist: isMock ? (d.id === 'm1' ? '1.2 km' : '0.8 km') : '0.0 km (You)',
       demand: 'High',
-      date: new Date(d.created_at).toLocaleDateString(),
+      date: isMock ? '25/4/26' : new Date(d.created_at).toLocaleDateString(),
       calories: d.calories,
       protein: d.protein,
       carbs: d.carbs,
@@ -142,8 +161,6 @@ export const ShopDashboard: React.FC = () => {
       allergens: d.allergens
     };
   });
-
-  const allListings = [...dynamicListings, ...activeListings];
 
   const donationHistory = [
     { date: 'Oct 12', food: 'Assorted Pastries', qty: '20 items', ngo: 'Hope NGO', value: '₹ 800' },
@@ -155,7 +172,7 @@ export const ShopDashboard: React.FC = () => {
     <div className="dashboard-container">
       <div className="dashboard-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
         <div>
-          <h1 className="page-title">Shop <span className="gradient-text">Dashboard</span></h1>
+          <h1 className="page-title">Rescue <span className="gradient-text">Dashboard</span></h1>
           <p className="page-subtitle">Manage your surplus listings and track your social impact.</p>
         </div>
         <div style={{ display: 'flex', gap: '12px' }}>
