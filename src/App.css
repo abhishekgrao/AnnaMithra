@@ -182,3 +182,16 @@
     border-right-color: var(--border);
   }
 }
+
+.app-main {
+  min-height: 100vh;
+  width: 100%;
+}
+
+.page-container {
+  padding: 100px 5% 60px;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+}

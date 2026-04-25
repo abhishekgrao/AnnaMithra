@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Navbar } from './components/layout/Navbar';
 import { ProtectedRoute } from './components/layout/ProtectedRoute';
 import { Landing } from './pages/Landing';
@@ -15,6 +15,11 @@ import { Loader } from './components/ui/Loader';
 import { GeminiChat } from './components/chat/GeminiChat';
 import type { ToastMessage } from './components/ui/Toast';
 import './App.css';
+
+const HomeRedirect = () => {
+  const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+  return isAuthenticated ? <Navigate to="/dashboard" replace /> : <Landing />;
+};
 
 function App() {
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
@@ -45,9 +50,9 @@ function App() {
       {showLoader && <Loader onComplete={() => setShowLoader(false)} />}
       <Router>
         <Navbar />
-        <main style={{ padding: '84px 24px 0', maxWidth: '1200px', margin: '0 auto', minHeight: '100vh' }}>
+        <main className="app-main">
           <Routes>
-            <Route path="/" element={<Login />} />
+            <Route path="/" element={<HomeRedirect />} />
             <Route path="/landing" element={<Landing />} />
             <Route path="/login" element={<Login />} />
             

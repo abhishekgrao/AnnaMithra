@@ -169,7 +169,7 @@ export const ShopDashboard: React.FC = () => {
   ];
 
   return (
-    <div className="dashboard-container">
+    <div className="page-container dashboard-page">
       <div className="dashboard-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
         <div>
           <h1 className="page-title">Rescue <span className="gradient-text">Dashboard</span></h1>

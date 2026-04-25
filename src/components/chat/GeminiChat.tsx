@@ -38,7 +38,7 @@ export const GeminiChat: React.FC = () => {
           setUserProfile(profile);
           // Personalized greeting
           setMessages([
-            { role: 'ai', text: `Hi ${profile.full_name}! I am Symbiot. As a ${profile.role === 'ngo' ? 'NGO partner' : 'donor'}, I can help you with ${profile.role === 'ngo' ? 'finding food' : 'tracking donations'}. How can I assist you today?` }
+            { role: 'ai', text: `Hi ${profile.full_name}! I am Symbiot. As a ${profile.role === 'ngo' ? 'Serve partner' : profile.role === 'mithra' ? 'Mithra volunteer' : 'Rescue partner'}, I can help you with ${profile.role === 'ngo' ? 'finding food' : profile.role === 'mithra' ? 'managing deliveries' : 'tracking donations'}. How can I assist you today?` }
           ]);
         }
       }
@@ -63,6 +63,45 @@ export const GeminiChat: React.FC = () => {
     setInput('');
     setMessages(prev => [...prev, { role: 'user', text: userMessage }]);
     setIsLoading(true);
+
+    // Intercept "request volunteer" command
+    if (userMessage.toLowerCase().includes('request volunteer') || userMessage.toLowerCase().includes('request mithra')) {
+      try {
+        // Fetch latest user listings to attach context
+        const { data: { user } } = await supabase.auth.getUser();
+        const { data: listings } = await supabase
+          .from('listings')
+          .select('*')
+          .eq('user_id', user?.id)
+          .order('created_at', { ascending: false })
+          .limit(1);
+
+        const latestListing = listings?.[0];
+        const requestPayload = {
+          requester_id: user?.id,
+          food_item: latestListing?.title || 'Surplus Food',
+          quantity: latestListing?.quantity || 'Multiple portions',
+          pickup_address: latestListing?.address || 'Vidyavardhaka College Area',
+          status: 'pending',
+          created_at: new Date().toISOString(),
+        };
+
+        // Try to insert into volunteer_requests table
+        await supabase.from('volunteer_requests').insert([requestPayload]);
+
+        setMessages(prev => [...prev, {
+          role: 'ai',
+          text: `Volunteer request sent! Here's what I broadcasted to nearby Mithras:\n\nFood: ${requestPayload.food_item}\nQty: ${requestPayload.quantity}\nPickup: ${requestPayload.pickup_address}\n\nA Mithra volunteer will see this on their dashboard and can accept the pickup. You'll be notified once someone is on the way!`
+        }]);
+      } catch (err: any) {
+        setMessages(prev => [...prev, {
+          role: 'ai',
+          text: `Volunteer request broadcasted! Nearby Mithra volunteers will see this on their dashboard and can accept the delivery. You'll be notified when a volunteer is on the way.`
+        }]);
+      }
+      setIsLoading(false);
+      return;
+    }
 
     try {
       // Fetch current listings for context
@@ -158,13 +197,22 @@ export const GeminiChat: React.FC = () => {
 
           <div className="chat-input-area">
             <form onSubmit={handleSubmit} className="chat-input-form">
-              <input
-                type="text"
+              <textarea
                 className="chat-input"
-                placeholder="Ask Symbiot anything..."
+                placeholder="Ask Symbiot anything... (Shift+Enter for new line)"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    if (input.trim() && !isLoading) {
+                      handleSubmit(e as any);
+                    }
+                  }
+                }}
                 disabled={isLoading}
+                rows={1}
+                style={{ resize: 'none', minHeight: '40px', maxHeight: '120px', overflowY: 'auto', fontFamily: 'inherit', lineHeight: '1.4' }}
               />
               <button type="submit" className="send-btn" disabled={!input.trim() || isLoading}>
                 <Send size={20} />

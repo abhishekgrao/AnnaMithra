@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ShopDashboard } from './ShopDashboard';
 import { NgoDashboard } from './NgoDashboard';
+import { MithraDashboard } from './MithraDashboard';
 import { supabase } from '../lib/supabase';
 
 export const Dashboard: React.FC = () => {
@@ -36,6 +37,10 @@ export const Dashboard: React.FC = () => {
 
   if (role === 'ngo') {
     return <NgoDashboard />;
+  }
+
+  if (role === 'mithra') {
+    return <MithraDashboard />;
   }
 
   // Default to shop dashboard

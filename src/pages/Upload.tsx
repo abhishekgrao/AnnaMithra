@@ -272,8 +272,8 @@ export const Upload: React.FC = () => {
   }
 
   return (
-    <div className="upload-container">
-      <div className="upload-header">
+    <div className="page-container upload-page">
+      <div className="upload-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
         <h1 className="page-title">Donate <span className="gradient-text">Food</span></h1>
         <p className="page-subtitle">List your surplus food to help feed the community. Takes under 2 minutes.</p>
       </div>

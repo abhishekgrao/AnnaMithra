@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Upload, MapPin, LayoutDashboard, Star, Bell, LogOut, LogIn } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
@@ -8,13 +8,24 @@ export const Navbar: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [showLoginPopup, setShowLoginPopup] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+  const userType = localStorage.getItem('userType') || '';
+  const isMithra = userType === 'mithra';
 
   let navLinks = [
     { name: 'Explore', path: '/explore', icon: <MapPin size={18} /> },
-    { name: 'Donate', path: '/upload', icon: <Upload size={18} /> },
-    { name: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard size={18} /> },
+    ...(!isMithra ? [{ name: 'Donate', path: '/upload', icon: <Upload size={18} /> }] : []),
+    { name: isMithra ? 'Deliveries' : 'Dashboard', path: '/dashboard', icon: <LayoutDashboard size={18} /> },
     { name: 'Alerts', path: '/notifications', icon: <Bell size={18} /> },
     { name: 'Profile', path: '/profile', icon: <Star size={18} /> },
   ];
@@ -27,6 +38,7 @@ export const Navbar: React.FC = () => {
     await supabase.auth.signOut();
     localStorage.removeItem('isAuthenticated');
     localStorage.removeItem('userRole');
+    localStorage.removeItem('userType');
     navigate('/');
   };
 
@@ -38,7 +50,7 @@ export const Navbar: React.FC = () => {
 
   return (
     <>
-      <nav className="navbar">
+      <nav className={`navbar ${isScrolled ? 'scrolled' : ''} ${location.pathname === '/' ? 'on-landing' : ''}`}>
         <div className="navbar-container">
           <Link to={isAuthenticated ? "/dashboard" : "/"} className="navbar-logo">
             <img src="/annamithralogo.jpeg" alt="AnnaMithra" className="navbar-logo-img" />
@@ -49,7 +61,7 @@ export const Navbar: React.FC = () => {
               const isRestricted = !isAuthenticated && link.name !== 'Login';
               return (
                 <Link
-                  key={link.path}
+                  key={link.name}
                   to={isRestricted ? '#' : link.path}
                   onClick={isRestricted ? handleRestrictedClick : undefined}
                   className={`nav-link ${location.pathname === link.path ? 'active' : ''} ${isRestricted ? 'disabled-link' : ''}`}

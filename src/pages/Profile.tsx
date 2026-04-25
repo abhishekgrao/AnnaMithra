@@ -4,7 +4,7 @@ import { Button } from '../components/ui/Button';
 import {
   User, ShieldCheck, MapPin, Camera,
   Award, TrendingUp, History, Star,
-  Info
+  Info, CheckCircle, AlertCircle
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { LeafletMap } from '../components/ui/LeafletMap';
@@ -27,11 +27,18 @@ export const Profile: React.FC = () => {
   const [verificationPhotoUrl, setVerificationPhotoUrl] = useState<string | null>(null);
   const [verificationLocation, setVerificationLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [isCapturing, setIsCapturing] = useState(false);
+  const [statusMsg, setStatusMsg] = useState<{ text: string; type: 'success' | 'error' | 'info' } | null>(null);
+
+  const showStatus = (text: string, type: 'success' | 'error' | 'info' = 'success') => {
+    setStatusMsg({ text, type });
+    setTimeout(() => setStatusMsg(null), 4000);
+  };
 
   const userType = localStorage.getItem('userType') || 'donor';
   const isDonor = userType === 'donor' || userType === 'shop' || userType === 'vendor';
+  const isMithra = userType === 'mithra';
   const userAnnaMithraId = localStorage.getItem('annaMithraId') || 'AM-7742';
-  const userName = isDonor ? 'Haldiram\'s' : 'Akshaya Patra';
+  const userName = isMithra ? 'Volunteer Mithra' : (isDonor ? 'Haldiram\'s' : 'Akshaya Patra');
 
   const handleVerifySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,7 +76,7 @@ export const Profile: React.FC = () => {
 
   const handleVerification = async () => {
     if (!verificationPhoto && !verificationLocation) {
-      alert("Please take a photo and get live location first!");
+      showStatus('Please take a photo and get live location first!', 'error');
       return;
     }
 
@@ -94,13 +101,13 @@ export const Profile: React.FC = () => {
 
       if (error) throw error;
 
-      alert('Proof submitted! AI analysis in progress... Your trust score will update shortly.');
+      showStatus('Proof submitted! AI analysis in progress... Your trust score will update shortly.', 'success');
       setTrustScore(prev => Math.min(prev + 2, 100));
       setVerificationPhoto(null);
       setVerificationPhotoUrl(null);
       setVerificationLocation(null);
     } catch (err: any) {
-      alert("Error submitting verification: " + err.message);
+      showStatus('Error submitting verification: ' + err.message, 'error');
     } finally {
       setIsVerifying(false);
     }
@@ -112,7 +119,7 @@ export const Profile: React.FC = () => {
       setVerificationPhoto(file);
       const url = URL.createObjectURL(file);
       setVerificationPhotoUrl(url);
-      alert("Photo captured successfully!");
+      showStatus('Photo captured successfully!', 'success');
     }
   };
 
@@ -122,13 +129,13 @@ export const Profile: React.FC = () => {
       // Hardcoded VVCE coordinates as requested
       setVerificationLocation({ lat: 12.3396, lng: 76.6201 });
       setIsCapturing(false);
-      alert("Location pinned: Vidyavardhaka College of Engineering");
+      showStatus('Location pinned: Vidyavardhaka College of Engineering', 'success');
     }, 1000);
   };
 
   return (
-    <div className="profile-container">
-      <div className="profile-grid">
+    <div className="page-container profile-page">
+      <div className="profile-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
         {/* Left Column: User Overview */}
         <div className="profile-main">
           <Card className="user-hero-card">
@@ -141,7 +148,7 @@ export const Profile: React.FC = () => {
                 <h1 style={{ margin: 0 }}>{userName}</h1>
                 {isVerified && (
                   <div className="verified-badge-premium" style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#4F633D', color: 'white', padding: '6px 12px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 800, boxShadow: '0 4px 10px rgba(0,0,0,0.1)' }}>
-                    <ShieldCheck size={12} /> {isDonor ? 'Verified Rescue Partner' : 'Verified Serve Partner'}
+                    <ShieldCheck size={12} /> {isMithra ? 'Verified Mithra' : (isDonor ? 'Verified Rescue Partner' : 'Verified Serve Partner')}
                   </div>
                 )}
               </div>
@@ -151,7 +158,7 @@ export const Profile: React.FC = () => {
               </div>
               <p>Registered as a Platinum Partner since April 2025</p>
               <Button size="sm" variant="outline" style={{ marginTop: '10px' }} onClick={() => setShowVerifyModal(true)}>
-                {isDonor ? 'Rescue Compliance Docs' : (isVerified ? 'Manage Verification Docs' : 'Apply for Official Verification')}
+                {isMithra ? 'Mithra ID & Docs' : (isDonor ? 'Rescue Compliance Docs' : (isVerified ? 'Manage Verification Docs' : 'Apply for Official Verification'))}
               </Button>
             </div>
           </Card>
@@ -177,6 +184,26 @@ export const Profile: React.FC = () => {
           <Card className="verification-card">
             <h3><Camera size={20} /> Verify New Contribution</h3>
             <p>Upload a photo of the food and current location to boost your trust score immediately.</p>
+
+            {statusMsg && (
+              <div style={{
+                padding: '12px 16px',
+                borderRadius: '12px',
+                marginBottom: '12px',
+                fontSize: '0.85rem',
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                animation: 'fadeIn 0.3s ease',
+                background: statusMsg.type === 'success' ? 'rgba(34, 197, 94, 0.1)' : statusMsg.type === 'error' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(59, 130, 246, 0.1)',
+                color: statusMsg.type === 'success' ? '#16a34a' : statusMsg.type === 'error' ? '#dc2626' : '#2563eb',
+                border: `1px solid ${statusMsg.type === 'success' ? 'rgba(34, 197, 94, 0.3)' : statusMsg.type === 'error' ? 'rgba(239, 68, 68, 0.3)' : 'rgba(59, 130, 246, 0.3)'}`,
+              }}>
+                {statusMsg.type === 'success' ? <CheckCircle size={18} /> : statusMsg.type === 'error' ? <AlertCircle size={18} /> : <Info size={18} />}
+                {statusMsg.text}
+              </div>
+            )}
             <div className="verification-upload-zone">
               <input 
                 type="file" 
