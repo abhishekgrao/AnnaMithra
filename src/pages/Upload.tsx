@@ -4,7 +4,7 @@ import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
 import { Select } from '../components/ui/Select';
 import { supabase } from '../lib/supabase';
-import { Upload as UploadIcon, MapPin, CheckSquare, Square, ShieldCheck, AlertCircle, Search, RefreshCw, Info } from 'lucide-react';
+import { Upload as UploadIcon, MapPin, CheckSquare, Square, ShieldCheck, AlertCircle, Search, RefreshCw, Info, Camera } from 'lucide-react';
 import { searchFood } from '../services/foodApi';
 import type { NutritionData } from '../services/foodApi';
 import './Upload.css';
@@ -192,6 +192,10 @@ export const Upload: React.FC = () => {
         throw new Error("You must be legally logged in to list a food donation.");
       }
 
+      // Safely parse dates
+      const parsedExpiry = expiryTime ? new Date(expiryTime) : new Date(Date.now() + 24 * 60 * 60 * 1000);
+      const parsedPrepared = preparedAt ? new Date(preparedAt) : new Date();
+
       // We use the new 'listings' table as requested
       const { error } = await supabase.from('listings').insert([
         {
@@ -199,8 +203,8 @@ export const Upload: React.FC = () => {
           title: title,
           category: category,
           quantity: quantity,
-          expiry_time: (new Date(expiryTime)).toISOString(),
-          expiry_days: Math.max(1, Math.ceil(((new Date(expiryTime)).getTime() - Date.now()) / (1000 * 60 * 60 * 24))),
+          expiry_time: parsedExpiry.toISOString(),
+          expiry_days: Math.max(1, Math.ceil((parsedExpiry.getTime() - Date.now()) / (1000 * 60 * 60 * 24))),
           latitude: manualCoords.lat ? parseFloat(manualCoords.lat) : (coords?.lat || 12.3396),
           longitude: manualCoords.lng ? parseFloat(manualCoords.lng) : (coords?.lng || 76.6201),
           source: user.email?.split('@')[0] || 'Community Donor',
@@ -214,7 +218,7 @@ export const Upload: React.FC = () => {
           nutrition_source: isManualNutrition ? 'manual' : (nutrition ? 'open_food_facts' : null),
           // Safety & System Data
           food_type: foodType,
-          prepared_at: preparedAt,
+          prepared_at: parsedPrepared.toISOString(),
           storage_temp_type: storageTempType,
           current_temp: currentTemp,
           packaging_type: packagingType,

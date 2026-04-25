@@ -227,7 +227,7 @@ export const GeminiChat: React.FC = () => {
             position: 'absolute', 
             top: -5, 
             right: -5, 
-            background: '#ff4d4f', 
+            background: '#22c55e', 
             color: 'white', 
             fontSize: '10px', 
             padding: '2px 6px', 
