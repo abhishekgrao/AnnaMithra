@@ -1,12 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card } from '../components/ui/Card';
-import { Button } from '../components/ui/Button';
 import {
   Bike, Package, CheckCircle2, Clock, MapPin, Navigation,
-  Star, TrendingUp, Phone, AlertTriangle, Trophy, Zap,
+  Star, Phone, AlertTriangle, Trophy, Zap,
   ChevronRight, ThumbsUp, Route
 } from 'lucide-react';
-import { supabase } from '../lib/supabase';
 import './Dashboard.css';
 
 // Hardcoded active orders for hackathon demo

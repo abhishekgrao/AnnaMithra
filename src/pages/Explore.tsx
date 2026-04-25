@@ -152,10 +152,14 @@ export const Explore: React.FC = () => {
         return;
       }
 
+      // Find the item being claimed (could be mock or real)
+      const claimedItem = items.find(i => i.id === selectedFoodId);
+
       // Check if it's a mock item (numeric ID) or a real Supabase item (UUID)
       const isMock = !selectedFoodId.includes('-'); 
 
       if (!isMock) {
+        // Real listing — just update status
         const { error } = await supabase
           .from('listings')
           .update({
@@ -165,8 +169,24 @@ export const Explore: React.FC = () => {
           .eq('id', selectedFoodId);
 
         if (error) throw error;
-      } else {
-        console.log('Simulating claim for mock item:', selectedFoodId);
+      } else if (claimedItem) {
+        // Mock item — INSERT into Supabase so NGO dashboard can see it
+        const { error } = await supabase
+          .from('listings')
+          .insert({
+            title: claimedItem.name,
+            source: claimedItem.donor || claimedItem.name,
+            quantity: claimQuantity || claimedItem.quantity || '1',
+            category: claimedItem.type || 'donation',
+            status: 'Claimed',
+            claimed_by: user.id,
+            latitude: (claimedItem as any).latitude || 12.3396,
+            longitude: (claimedItem as any).longitude || 76.6201,
+            expiry_days: (claimedItem as any).expiryDays || (claimedItem as any).expiry_days || 1,
+            urgency_score: claimedItem.urgencyScore || 50,
+          });
+
+        if (error) console.warn('Mock insert warning:', error);
       }
 
       setClaimedIds(prev => [...prev, selectedFoodId]);
@@ -175,7 +195,7 @@ export const Explore: React.FC = () => {
       setSelectedFoodId(null);
     } catch (err) {
       console.error('Error claiming food:', err);
-      alert("Failed to confirm claim. If this is a real listing, please check your connection. Mock items are now handled.");
+      alert("Failed to confirm claim. Please check your connection.");
     }
   };
 

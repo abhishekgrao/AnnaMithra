@@ -60,7 +60,7 @@ export const Upload: React.FC = () => {
   const [errorMsg, setErrorMsg] = useState('');
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
-  const [foodPhoto, setFoodPhoto] = useState<File | null>(null);
+  const [_foodPhoto, setFoodPhoto] = useState<File | null>(null);
   const [foodPhotoUrl, setFoodPhotoUrl] = useState<string | null>(null);
 
   // Safety & Logistics State
@@ -347,7 +347,7 @@ export const Upload: React.FC = () => {
                       <div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
                           <span style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--color-primary)' }}>Nutritional data available</span>
-                          <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>via Open Food Facts</span>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>via Nutrition Database</span>
                         </div>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
                           <div style={{ textAlign: 'center', background: 'white', padding: '8px', borderRadius: '8px' }}>
