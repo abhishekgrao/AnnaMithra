@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Upload, MapPin, LayoutDashboard, Star, Bell, LogOut, LogIn } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
@@ -8,15 +8,6 @@ export const Navbar: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [showLoginPopup, setShowLoginPopup] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
   const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
   const userType = localStorage.getItem('userType') || '';
@@ -50,7 +41,7 @@ export const Navbar: React.FC = () => {
 
   return (
     <>
-      <nav className={`navbar ${isScrolled ? 'scrolled' : ''} ${location.pathname === '/' ? 'on-landing' : ''}`}>
+      <nav className="navbar">
         <div className="navbar-container">
           <Link to={isAuthenticated ? "/dashboard" : "/"} className="navbar-logo">
             <img src="/annamithralogo.jpeg" alt="AnnaMithra" className="navbar-logo-img" />

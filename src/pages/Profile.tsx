@@ -134,8 +134,8 @@ export const Profile: React.FC = () => {
   };
 
   return (
-    <div className="page-container profile-page">
-      <div className="profile-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
+    <div className="profile-container">
+      <div className="profile-grid">
         {/* Left Column: User Overview */}
         <div className="profile-main">
           <Card className="user-hero-card">

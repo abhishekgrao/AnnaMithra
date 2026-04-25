@@ -194,7 +194,7 @@ export const Explore: React.FC = () => {
   }));
 
   return (
-    <div className="page-container explore-page">
+    <div className="explore-container">
       {/* Enriched Claim Donation Modal */}
       {selectedFood && (
         <div 
@@ -491,7 +491,7 @@ export const Explore: React.FC = () => {
           ))}
         </div>
       ) : (
-        <div className="page-container notifications-page">
+        <div className="empty-state">
           <Card className="empty-card">
             <AlertCircle size={48} className="empty-icon" />
             <h3>No Food Available</h3>

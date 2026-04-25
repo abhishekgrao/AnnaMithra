@@ -100,8 +100,8 @@ Thank you for contributing to a zero-waste future!
   ];
 
   return (
-    <div className="page-container ngo-dashboard">
-      <div className="dashboard-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px', marginBottom: '32px' }}>
+    <div className="dashboard-container">
+      <div className="dashboard-header">
         <h1 className="page-title">Serve <span className="gradient-text">Dashboard</span></h1>
         <p className="page-subtitle">Real-time analytics for your contribution to the circular food economy.</p>
       </div>
