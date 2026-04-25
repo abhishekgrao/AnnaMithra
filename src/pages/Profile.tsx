@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
-import { 
-  User, ShieldCheck, MapPin, Camera, 
+import {
+  User, ShieldCheck, MapPin, Camera,
   Award, TrendingUp, History, Star,
   Info
 } from 'lucide-react';
@@ -199,31 +199,31 @@ export const Profile: React.FC = () => {
               <ShieldCheck size={24} /> {isDonor ? 'Business Verification' : 'NGO Verification'}
             </h2>
             <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem', marginBottom: '24px' }}>
-              {isDonor 
-                ? 'Submit your business credentials to unlock the verified partner badge and gain donor trust.' 
+              {isDonor
+                ? 'Submit your business credentials to unlock the verified partner badge and gain donor trust.'
                 : 'Submit your official documents to unlock high-priority claims and tax benefits.'}
             </p>
-            
+
             <form onSubmit={handleVerifySubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                   <label style={{ fontSize: '0.8rem', fontWeight: 700 }}>Section 8 License No.</label>
-                  <input required placeholder="SEC8-XXXXX" style={{ padding: '10px', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.1)' }} value={verifyForm.section8} onChange={e => setVerifyForm({...verifyForm, section8: e.target.value})} />
+                  <input required placeholder="SEC8-XXXXX" style={{ padding: '10px', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.1)' }} value={verifyForm.section8} onChange={e => setVerifyForm({ ...verifyForm, section8: e.target.value })} />
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                   <label style={{ fontSize: '0.8rem', fontWeight: 700 }}>PAN Number</label>
-                  <input required placeholder="ABCDE1234F" style={{ padding: '10px', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.1)' }} value={verifyForm.pan} onChange={e => setVerifyForm({...verifyForm, pan: e.target.value})} />
+                  <input required placeholder="ABCDE1234F" style={{ padding: '10px', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.1)' }} value={verifyForm.pan} onChange={e => setVerifyForm({ ...verifyForm, pan: e.target.value })} />
                 </div>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 <label style={{ fontSize: '0.8rem', fontWeight: 700 }}>Aadhar Number (Admin)</label>
-                <input required placeholder="XXXX-XXXX-XXXX" style={{ padding: '10px', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.1)' }} value={verifyForm.aadhar} onChange={e => setVerifyForm({...verifyForm, aadhar: e.target.value})} />
+                <input required placeholder="XXXX-XXXX-XXXX" style={{ padding: '10px', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.1)' }} value={verifyForm.aadhar} onChange={e => setVerifyForm({ ...verifyForm, aadhar: e.target.value })} />
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 <label style={{ fontSize: '0.8rem', fontWeight: 700 }}>Office Address</label>
-                <textarea required placeholder="Full registered address..." style={{ padding: '10px', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.1)', height: '80px' }} value={verifyForm.address} onChange={e => setVerifyForm({...verifyForm, address: e.target.value})} />
+                <textarea required placeholder="Full registered address..." style={{ padding: '10px', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.1)', height: '80px' }} value={verifyForm.address} onChange={e => setVerifyForm({ ...verifyForm, address: e.target.value })} />
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -232,7 +232,7 @@ export const Profile: React.FC = () => {
                     <label style={{ fontSize: '0.8rem', fontWeight: 700 }}>Section 12A Registration</label>
                     <span style={{ fontSize: '0.6rem', color: 'var(--color-primary)', fontWeight: 800 }}>✨ 0 Tax</span>
                   </div>
-                  <input placeholder="Registration No. (Optional)" style={{ padding: '10px', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.1)', background: 'white', fontSize: '0.85rem' }} value={verifyForm.section12a} onChange={e => setVerifyForm({...verifyForm, section12a: e.target.value})} />
+                  <input placeholder="Registration No. (Optional)" style={{ padding: '10px', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.1)', background: 'white', fontSize: '0.85rem' }} value={verifyForm.section12a} onChange={e => setVerifyForm({ ...verifyForm, section12a: e.target.value })} />
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', padding: '12px', background: 'rgba(79, 99, 61, 0.05)', borderRadius: '12px', border: '1px dashed var(--color-primary)' }}>
@@ -240,7 +240,7 @@ export const Profile: React.FC = () => {
                     <label style={{ fontSize: '0.8rem', fontWeight: 700 }}>80G Certificate</label>
                     <span style={{ fontSize: '0.6rem', color: 'var(--color-primary)', fontWeight: 800 }}>🎁 Donor Perk</span>
                   </div>
-                  <input placeholder="80G Certificate No. (Optional)" style={{ padding: '10px', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.1)', background: 'white', fontSize: '0.85rem' }} value={verifyForm.section80g} onChange={e => setVerifyForm({...verifyForm, section80g: e.target.value})} />
+                  <input placeholder="80G Certificate No. (Optional)" style={{ padding: '10px', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.1)', background: 'white', fontSize: '0.85rem' }} value={verifyForm.section80g} onChange={e => setVerifyForm({ ...verifyForm, section80g: e.target.value })} />
                 </div>
               </div>
               <p style={{ margin: '0', fontSize: '0.7rem', color: 'var(--color-text-muted)', textAlign: 'center' }}>

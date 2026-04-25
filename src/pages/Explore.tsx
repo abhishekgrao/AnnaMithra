@@ -176,7 +176,7 @@ export const Explore: React.FC = () => {
           const expDate = d.expiry_time ? new Date(d.expiry_time) : new Date(Date.now() + (d.expiry_days || 1) * 86400000);
           const now = new Date();
           const hoursLeft = Math.max(0, (expDate.getTime() - now.getTime()) / (1000 * 60 * 60));
-          
+
           let urgencyLevel: 'high' | 'medium' | 'low' = 'low';
           let urgencyLabel = '✅ Low Priority';
           let urgencyScore = d.urgency_score || 30;
@@ -196,7 +196,7 @@ export const Explore: React.FC = () => {
             name: d.title,
             type: d.category || 'Surplus Food',
             quantity: d.quantity,
-            distance: '0.5 km', 
+            distance: '0.5 km',
             expiry: hoursLeft < 1 ? `${Math.round(hoursLeft * 60)} mins` : hoursLeft < 24 ? `${Math.round(hoursLeft)} hours` : `${d.expiry_days || 1} days`,
             donor: d.source || 'Local Donor',
             urgencyScore,
@@ -237,7 +237,7 @@ export const Explore: React.FC = () => {
           return hasGeo || isMine;
         });
 
-        const uniqueItems = filteredByGeo.filter((item, index, self) => 
+        const uniqueItems = filteredByGeo.filter((item, index, self) =>
           index === self.findIndex((t) => t.id === item.id)
         );
 
@@ -269,15 +269,22 @@ export const Explore: React.FC = () => {
         return;
       }
 
-      const { error } = await supabase
-        .from('listings')
-        .update({ 
-          status: 'Claimed', 
-          claimed_by: user.id 
-        })
-        .eq('id', selectedFoodId);
+      // Check if it's a mock item (numeric ID) or a real Supabase item (UUID)
+      const isMock = !selectedFoodId.includes('-'); 
 
-      if (error) throw error;
+      if (!isMock) {
+        const { error } = await supabase
+          .from('listings')
+          .update({
+            status: 'Claimed',
+            claimed_by: user.id
+          })
+          .eq('id', selectedFoodId);
+
+        if (error) throw error;
+      } else {
+        console.log('Simulating claim for mock item:', selectedFoodId);
+      }
 
       setClaimedIds(prev => [...prev, selectedFoodId]);
       setSuccessMsg(`Claim confirmed for ${claimQuantity || 'selected quantity'}! The donor has been notified and this order is now in your dashboard.`);
@@ -285,7 +292,7 @@ export const Explore: React.FC = () => {
       setSelectedFoodId(null);
     } catch (err) {
       console.error('Error claiming food:', err);
-      alert("Failed to confirm claim. Please try again.");
+      alert("Failed to confirm claim. If this is a real listing, please check your connection. Mock items are now handled.");
     }
   };
 
@@ -307,17 +314,33 @@ export const Explore: React.FC = () => {
     <div className="explore-container">
       {/* Enriched Claim Donation Modal */}
       {selectedFood && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(10px)' }}>
-          <Card className="glass" style={{ maxWidth: '800px', width: '95%', maxHeight: '90vh', overflowY: 'auto', padding: '32px', position: 'relative', border: '1px solid rgba(255,255,255,0.2)' }}>
+        <div 
+          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          onClick={() => setSelectedFoodId(null)}
+        >
+          <div 
+            style={{ 
+              maxWidth: '800px', 
+              width: '95%', 
+              maxHeight: '90vh', 
+              overflowY: 'auto', 
+              padding: '32px', 
+              position: 'relative', 
+              background: '#F0EFE9', 
+              borderRadius: '24px',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
             <h2 style={{ marginBottom: '24px', fontSize: '1.8rem', fontWeight: 800, color: 'var(--color-primary)', borderBottom: '2px solid rgba(79, 99, 61, 0.1)', paddingBottom: '16px' }}>Claim Donation Detail</h2>
-            
+
             <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '24px' }}>
-              
+
               {/* Left Column: System & Safety Data */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <div style={{ padding: '20px', background: 'rgba(255,255,255,0.5)', borderRadius: '16px', border: '1px solid rgba(79, 99, 61, 0.1)' }}>
+                <div style={{ padding: '24px', background: 'white', borderRadius: '20px', border: '1px solid rgba(0,0,0,0.05)' }}>
                   <h4 style={{ margin: '0 0 16px 0', fontSize: '0.85rem', textTransform: 'uppercase', color: 'var(--color-primary)', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <ShieldCheck size={16} /> 🛡️ Trust & Safety Insights
+                    <ShieldCheck size={16} /> TRUST & SAFETY INSIGHTS
                   </h4>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', fontSize: '0.9rem' }}>
                     <p><strong>Food Type:</strong> {selectedFood.foodType}</p>
@@ -329,24 +352,24 @@ export const Explore: React.FC = () => {
                   </div>
                 </div>
 
-                <div style={{ padding: '20px', background: 'rgba(79, 99, 61, 0.05)', borderRadius: '16px', border: '1px solid rgba(79, 99, 61, 0.2)' }}>
+                <div style={{ padding: '24px', background: 'white', borderRadius: '20px', border: '1px solid rgba(0,0,0,0.05)' }}>
                   <h4 style={{ margin: '0 0 16px 0', fontSize: '0.85rem', textTransform: 'uppercase', color: 'var(--color-primary)', fontWeight: 800 }}>
-                    ⚙️ System Logistics
+                    ⚙️ SYSTEM LOGISTICS
                   </h4>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', fontSize: '0.9rem' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', fontSize: '0.9rem', marginBottom: '16px' }}>
                     <p><strong>Max Safe:</strong> {selectedFood.maxSafeDuration}</p>
                     <p><strong>Remaining:</strong> <span style={{ fontWeight: 800, color: 'var(--color-primary)' }}>{selectedFood.remainingSafeTime}</span></p>
                     <p><strong>Buffer:</strong> {selectedFood.safetyBuffer}</p>
                     <p><strong>Transport:</strong> <span style={{ fontWeight: 800 }}>{selectedFood.transportFeasible}</span></p>
                   </div>
-                  <div style={{ marginTop: '16px', display: 'flex', gap: '12px' }}>
-                    <div style={{ flex: 1, background: 'white', padding: '10px', borderRadius: '8px', textAlign: 'center' }}>
-                      <div style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>Trust Score</div>
-                      <div style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--color-primary)' }}>{selectedFood.vendorTrustScore}%</div>
+                  <div style={{ display: 'flex', gap: '12px' }}>
+                    <div style={{ flex: 1, background: '#F9FAFB', padding: '12px', borderRadius: '12px', textAlign: 'center', border: '1px solid rgba(0,0,0,0.03)' }}>
+                      <div style={{ fontSize: '0.7rem', color: '#666', fontWeight: 600 }}>Trust Score</div>
+                      <div style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--color-primary)' }}>{selectedFood.vendorTrustScore}%</div>
                     </div>
-                    <div style={{ flex: 1, background: 'white', padding: '10px', borderRadius: '8px', textAlign: 'center' }}>
-                      <div style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>Accuracy</div>
-                      <div style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--color-primary)' }}>{selectedFood.pastAccuracyScore}%</div>
+                    <div style={{ flex: 1, background: '#F9FAFB', padding: '12px', borderRadius: '12px', textAlign: 'center', border: '1px solid rgba(0,0,0,0.03)' }}>
+                      <div style={{ fontSize: '0.7rem', color: '#666', fontWeight: 600 }}>Accuracy</div>
+                      <div style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--color-primary)' }}>{selectedFood.pastAccuracyScore}%</div>
                     </div>
                   </div>
                 </div>
@@ -354,12 +377,12 @@ export const Explore: React.FC = () => {
 
               {/* Right Column: Donor & Logistics Info */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <div style={{ padding: '20px', background: 'rgba(0,0,0,0.03)', borderRadius: '16px' }}>
+                <div style={{ padding: '24px', background: 'white', borderRadius: '20px', border: '1px solid rgba(0,0,0,0.05)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
-                    <h4 style={{ margin: 0, fontSize: '0.85rem', textTransform: 'uppercase', color: 'var(--color-primary)', fontWeight: 800 }}>Donor Info</h4>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>#ID-{selectedFood.id.slice(0, 4)}</span>
+                    <h4 style={{ margin: 0, fontSize: '0.85rem', textTransform: 'uppercase', color: 'var(--color-primary)', fontWeight: 800 }}>DONOR INFO</h4>
+                    <span style={{ fontSize: '0.75rem', color: '#999' }}>#ID-{selectedFood.id.slice(0, 4)}</span>
                   </div>
-                  <div style={{ fontSize: '0.95rem', lineHeight: '1.8' }}>
+                  <div style={{ fontSize: '1rem', lineHeight: '1.6' }}>
                     <p><strong>Name:</strong> {selectedFood.donor}</p>
                     <p><strong>Item:</strong> {selectedFood.name}</p>
                     <p><strong>Available:</strong> <span style={{ color: 'var(--color-primary)', fontWeight: 800 }}>{selectedFood.quantity}</span></p>
@@ -368,64 +391,72 @@ export const Explore: React.FC = () => {
                   </div>
                 </div>
 
-                <LeafletMap 
-                  location={selectedFood.donor} 
-                  lat={(selectedFood as any).latitude} 
-                  lng={(selectedFood as any).longitude} 
+                <LeafletMap
+                  location={selectedFood.donor}
+                  lat={(selectedFood as any).latitude}
+                  lng={(selectedFood as any).longitude}
                 />
               </div>
             </div>
 
             <div style={{ marginTop: '24px', background: 'white', padding: '24px', borderRadius: '20px', border: '1px solid rgba(0,0,0,0.05)' }}>
-              <label style={{ display: 'block', fontSize: '1rem', marginBottom: '12px', fontWeight: 700, color: 'var(--color-primary)' }}>Quantiy Selection</label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-                <input 
-                  type="number" 
-                  min="1"
-                  max={parseInt(selectedFood.quantity, 10) || 40}
-                  value={claimQuantity || 1} 
-                  onChange={(e) => setClaimQuantity(e.target.value)} 
-                  style={{ width: '80px', padding: '12px', borderRadius: '12px', border: '2px solid var(--color-primary-light)', background: 'var(--color-bg)', color: 'var(--color-primary)', fontSize: '1.2rem', textAlign: 'center', fontWeight: 'bold' }}
-                />
-                <input 
-                  type="range"
-                  min="1"
-                  max={parseInt(selectedFood.quantity, 10) || 40}
-                  value={claimQuantity || 1} 
-                  onChange={(e) => setClaimQuantity(e.target.value)} 
-                  style={{ flex: 1, accentColor: 'var(--color-primary)' }}
-                />
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <label style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--color-primary)' }}>Quantity Selection</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: '#F3F4F6', padding: '6px', borderRadius: '12px' }}>
+                  <button 
+                    onClick={() => setClaimQuantity(prev => Math.max(1, (parseInt(prev, 10) || 1) - 1).toString())}
+                    style={{ width: '32px', height: '32px', borderRadius: '8px', border: 'none', background: 'white', fontWeight: 800, cursor: 'pointer' }}
+                  >-</button>
+                  <input 
+                    type="number"
+                    value={claimQuantity || 1}
+                    onChange={(e) => setClaimQuantity(e.target.value)}
+                    style={{ width: '50px', border: 'none', background: 'transparent', textAlign: 'center', fontWeight: 800, fontSize: '1.1rem' }}
+                  />
+                  <button 
+                    onClick={() => setClaimQuantity(prev => Math.min(parseInt(selectedFood.quantity, 10) || 40, (parseInt(prev, 10) || 1) + 1).toString())}
+                    style={{ width: '32px', height: '32px', borderRadius: '8px', border: 'none', background: 'white', fontWeight: 800, cursor: 'pointer' }}
+                  >+</button>
+                </div>
               </div>
+              <input 
+                type="range"
+                min="1"
+                max={parseInt(selectedFood.quantity, 10) || 40}
+                value={claimQuantity || 1} 
+                onChange={(e) => setClaimQuantity(e.target.value)} 
+                style={{ width: '100%', accentColor: 'var(--color-primary)' }}
+              />
             </div>
-            
+
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '24px' }}>
-              <Button size="lg" variant="outline" onClick={() => setSelectedFoodId(null)} style={{ boxShadow: 'none' }}>Back to Explore</Button>
-              <Button size="lg" onClick={handleConfirmClaim}>Confirm Claim Now</Button>
+              <Button size="lg" variant="outline" onClick={() => setSelectedFoodId(null)} style={{ background: 'white', borderRadius: '16px' }}>Back to Explore</Button>
+              <Button size="lg" onClick={handleConfirmClaim} style={{ borderRadius: '16px' }}>Confirm Claim Now</Button>
             </div>
 
             <Button 
-              variant="glass"
+              variant="outline"
               onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedFood.donor)}`, '_blank')}
-              style={{ width: '100%', marginTop: '12px', background: 'rgba(79, 99, 61, 0.1)', color: 'var(--color-primary)' }}
+              style={{ width: '100%', marginTop: '12px', background: 'rgba(79, 99, 61, 0.05)', color: 'var(--color-primary)', border: 'none', borderRadius: '12px' }}
             >
               <MapPin size={16} /> Navigate in Google Maps
             </Button>
-          </Card>
+          </div>
         </div>
       )}
 
       {/* Success Modal */}
       {showSuccess && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(8px)' }}>
-          <Card className="glass" style={{ maxWidth: '400px', width: '90%', padding: '32px', textAlign: 'center', animation: 'jump 0.5s ease-out' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ maxWidth: '400px', width: '90%', padding: '32px', textAlign: 'center', background: 'white', borderRadius: '24px', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}>
             <div style={{ width: '64px', height: '64px', background: 'var(--color-primary)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', color: 'white', fontSize: '2rem', boxShadow: '0 10px 20px rgba(79, 99, 61, 0.3)' }}>✅</div>
             <h2 style={{ color: 'var(--color-primary)', marginBottom: '12px' }}>Success!</h2>
             <p style={{ color: 'var(--color-text-muted)', lineHeight: '1.6', marginBottom: '24px' }}>{successMsg}</p>
-            <Button fullWidth onClick={() => setShowSuccess(false)}>Awesome!</Button>
-          </Card>
+            <Button fullWidth onClick={() => setShowSuccess(false)} style={{ borderRadius: '12px' }}>Awesome!</Button>
+          </div>
         </div>
       )}
-      
+
       <div className="explore-header">
         <h1 className="page-title">Find Food <span className="gradient-text">Nearby</span></h1>
         <p className="page-subtitle">Real-time surplus food available, sorted by urgency. Claim before it expires!</p>
@@ -460,8 +491,8 @@ export const Explore: React.FC = () => {
 
       {/* Interactive Map Section */}
       <div id="interactive-map" style={{ marginBottom: '32px' }}>
-        <ListingMap 
-          listings={mapListings} 
+        <ListingMap
+          listings={mapListings}
           onMarkerClick={(listing) => setSelectedFoodId(listing.id)}
         />
       </div>
@@ -479,8 +510,8 @@ export const Explore: React.FC = () => {
       {filteredItems.length > 0 ? (
         <div className="food-grid">
           {[...filteredItems].sort((a, b) => (b.urgencyScore || 0) - (a.urgencyScore || 0)).map((item) => (
-            <Card 
-              key={item.id} 
+            <Card
+              key={item.id}
               id={`food-card-${item.id}`}
               className={`food-card urgency-border-${item.urgencyLevel} ${selectedFoodId === item.id ? 'selected-jump' : ''}`}
             >
@@ -558,6 +589,6 @@ export const Explore: React.FC = () => {
 
 const RefreshCwIcon = () => (
   <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--color-primary)' }}>
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.51"/></svg>
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="1 4 1 10 7 10" /><path d="M3.51 15a9 9 0 1 0 .49-3.51" /></svg>
   </div>
 );
